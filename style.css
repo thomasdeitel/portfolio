@@ -1,16 +1,22 @@
 html {
+  color-scheme: light dark;
   --font-body: "Avenir Next", "Trebuchet MS", Verdana, sans-serif;
   --font-display: "Optima", "Avenir Next", "Trebuchet MS", sans-serif;
   --color-accent: oklch(62% 0.17 245);
-  --color-text: oklch(28% 0.03 255);
-  --color-border: oklch(82% 0.03 220);
-  --color-border-strong: oklch(74% 0.04 220);
-  --color-surface: oklch(99% 0.01 220 / 0.92);
-  --color-surface-alt: oklch(96% 0.02 230 / 0.94);
+  --color-text: light-dark(oklch(28% 0.03 255), oklch(92% 0.02 240));
+  --color-muted: light-dark(oklch(45% 0.03 240), oklch(72% 0.02 235));
+  --color-border: light-dark(oklch(82% 0.03 220), oklch(56% 0.04 220 / 0.45));
+  --color-border-strong: light-dark(oklch(74% 0.04 220), oklch(72% 0.05 220 / 0.72));
+  --color-surface: light-dark(oklch(99% 0.01 220 / 0.92), oklch(23% 0.02 255 / 0.82));
+  --color-surface-alt: light-dark(oklch(96% 0.02 230 / 0.94), oklch(26% 0.03 250 / 0.88));
+  --color-field: light-dark(white, oklch(26% 0.02 255));
+  --page-glow: light-dark(oklch(97% 0.04 235), oklch(44% 0.07 250 / 0.26));
+  --page-start: light-dark(oklch(99% 0.01 220), oklch(16% 0.02 252));
+  --page-end: light-dark(oklch(96% 0.02 235), oklch(12% 0.03 246));
   accent-color: var(--color-accent);
   background:
-    radial-gradient(circle at top left, oklch(97% 0.04 235), transparent 28rem),
-    linear-gradient(180deg, oklch(99% 0.01 220), oklch(96% 0.02 235));
+    radial-gradient(circle at top left, var(--page-glow), transparent 28rem),
+    linear-gradient(180deg, var(--page-start), var(--page-end));
   color: var(--color-text);
 }
 
@@ -25,7 +31,8 @@ body {
   margin: 0 auto;
   max-width: 100ch;
   min-height: 100vh;
-  padding: 1.5rem;
+  padding: 4.5rem 1.5rem 1.5rem;
+  position: relative;
 }
 
 h1,
@@ -73,7 +80,8 @@ a:focus-visible {
 }
 
 nav {
-  border-bottom: 1px solid var(--color-border);
+  --border-color: light-dark(oklch(50% 0.06 220 / 0.35), oklch(72% 0.05 220 / 0.35));
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
@@ -96,7 +104,7 @@ nav a.current {
 
 nav a:hover,
 nav a:focus-visible {
-  background-color: oklch(from var(--color-accent) 96% 0.03 h);
+  background-color: color-mix(in oklch, var(--color-accent), canvas 85%);
   border-bottom-color: var(--color-accent);
   color: inherit;
 }
@@ -140,16 +148,23 @@ label {
 
 input,
 textarea,
+button,
+select {
+  font: inherit;
+}
+
+input,
+textarea,
 button {
   border-radius: 0.75rem;
-  font: inherit;
   padding: 0.75rem 0.9rem;
 }
 
 input,
 textarea {
-  background-color: white;
+  background-color: var(--color-field);
   border: 1px solid var(--color-border);
+  color: inherit;
   width: 100%;
 }
 
@@ -172,6 +187,34 @@ button {
 button:hover,
 button:focus-visible {
   background-color: oklch(from var(--color-accent) 54% c h);
+}
+
+.color-scheme {
+  align-items: center;
+  background: color-mix(in oklch, var(--color-surface-alt), canvas 18%);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  box-shadow: 0 0.75rem 1.5rem oklch(20% 0.02 240 / 0.12);
+  display: inline-flex;
+  font-size: 0.8rem;
+  gap: 0.5rem;
+  padding: 0.35rem 0.55rem 0.35rem 0.8rem;
+  position: absolute;
+  right: 1.5rem;
+  top: 1rem;
+  z-index: 1;
+}
+
+.color-scheme select {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  padding: 0.15rem 0.35rem;
+}
+
+.color-scheme select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 0.2rem;
 }
 
 .projects {
@@ -204,11 +247,25 @@ button:focus-visible {
   margin: 0;
 }
 
+.projects h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.projects h2 a:hover,
+.projects h2 a:focus-visible {
+  color: var(--color-accent);
+}
+
 .projects img {
   aspect-ratio: 16 / 10;
   background:
-    linear-gradient(140deg, oklch(95% 0.03 240), white),
-    linear-gradient(320deg, oklch(from var(--color-accent) 95% 0.04 h), transparent);
+    linear-gradient(
+      140deg,
+      light-dark(oklch(95% 0.03 240), oklch(31% 0.03 248)),
+      light-dark(white, oklch(22% 0.03 245))
+    ),
+    linear-gradient(320deg, color-mix(in oklch, var(--color-accent), canvas 84%), transparent);
   border-radius: 0.75rem;
   object-fit: cover;
   width: 100%;
@@ -259,6 +316,26 @@ main > section article + article {
   margin-top: 1.5rem;
 }
 
+.project-actions {
+  font-weight: 600;
+}
+
+.project-figure {
+  margin: 1.25rem 0 0;
+}
+
+.project-figure img {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  box-shadow: 0 1rem 2rem oklch(30% 0.03 250 / 0.08);
+}
+
+.project-figure figcaption {
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  margin-top: 0.75rem;
+}
+
 main > section article section {
   margin-top: 1rem;
 }
@@ -283,7 +360,7 @@ main > section li + li {
 }
 
 .entry-meta {
-  color: oklch(45% 0.03 240);
+  color: var(--color-muted);
   margin: 0;
 }
 
@@ -303,11 +380,17 @@ main > section li + li {
 
 @media (max-width: 40rem) {
   body {
-    padding: 1rem;
+    padding: 4rem 1rem 1rem;
   }
 
   h1 {
     font-size: 300%;
+  }
+
+  .color-scheme {
+    font-size: 0.8rem;
+    right: 1rem;
+    top: 0.75rem;
   }
 
   nav a {
