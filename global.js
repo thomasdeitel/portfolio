@@ -18,6 +18,8 @@ const BASE_URL = new URL('.', import.meta.url);
 const BASE_PATH = normalizePathname(BASE_URL.pathname);
 const CURRENT_PATH = normalizePathname(location.pathname);
 const COLOR_SCHEMES = new Set(['light dark', 'light', 'dark']);
+const HEADING_LEVEL_PATTERN = /^h[1-6]$/i;
+const FALLBACK_PROJECT_IMAGE = 'https://dsc106.com/labs/lab02/images/empty.svg';
 
 function normalizePathname(pathname) {
   if (!pathname || pathname === '/') {
@@ -35,6 +37,102 @@ function isCurrentPage(link) {
     (linkPath !== BASE_PATH && CURRENT_PATH.startsWith(linkPath))
   );
 }
+
+function resolveURL(path) {
+  return new URL(path, BASE_URL).toString();
+}
+
+export async function fetchJSON(url) {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch JSON data: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching or parsing JSON data:', error);
+    return null;
+  }
+}
+
+export function renderProjects(projects, containerElement, headingLevel = 'h2') {
+  if (!(containerElement instanceof Element)) {
+    console.error('renderProjects expected a valid container element.');
+    return;
+  }
+
+  containerElement.innerHTML = '';
+
+  if (!Array.isArray(projects) || projects.length === 0) {
+    const placeholder = document.createElement('p');
+    placeholder.className = 'projects-empty';
+    placeholder.textContent = 'Projects coming soon.';
+    containerElement.append(placeholder);
+    return;
+  }
+
+  const headingTag = HEADING_LEVEL_PATTERN.test(headingLevel) ? headingLevel.toLowerCase() : 'h2';
+
+  for (const project of projects) {
+    const article = document.createElement('article');
+    const heading = document.createElement(headingTag);
+    const title = project.title?.trim() || 'Untitled Project';
+    const year = project.year?.toString().trim();
+    const description = project.description?.trim() || 'Description coming soon.';
+    const imageSource = resolveURL(project.image?.trim() || FALLBACK_PROJECT_IMAGE);
+    const imageAlt = project.imageAlt?.trim() || `Preview image for ${title}`;
+    const projectURL = project.url?.trim() ? resolveURL(project.url.trim()) : null;
+
+    if (projectURL) {
+      const titleLink = document.createElement('a');
+      titleLink.href = projectURL;
+      titleLink.className = 'project-link';
+      titleLink.textContent = title;
+      heading.append(titleLink);
+    } else {
+      heading.textContent = title;
+    }
+
+    article.append(heading);
+
+    if (year) {
+      const yearElement = document.createElement('p');
+      yearElement.className = 'project-year';
+      yearElement.textContent = year;
+      article.append(yearElement);
+    }
+
+    const image = document.createElement('img');
+    image.src = imageSource;
+    image.alt = imageAlt;
+
+    if (projectURL) {
+      const imageLink = document.createElement('a');
+      imageLink.href = projectURL;
+      imageLink.className = 'project-media';
+      imageLink.append(image);
+      article.append(imageLink);
+    } else {
+      article.append(image);
+    }
+
+    const descriptionElement = document.createElement('p');
+    descriptionElement.className = 'project-description';
+    descriptionElement.textContent = description;
+    article.append(descriptionElement);
+
+    containerElement.append(article);
+  }
+}
+
+export async function fetchGitHubData(username) {
+  return fetchJSON(`https://api.github.com/users/${username}`);
+}
+
+export const fetchGithubData = fetchGitHubData;
 
 const nav = document.createElement('nav');
 
