@@ -12,6 +12,16 @@
     <section aria-labelledby="projects-heading">
       <h1 class="projects-title" id="projects-heading">Projects</h1>
       <p>The projects on this page are loaded from a shared JSON file, so the same data can power both this page and the homepage preview automatically.</p>
+      <div class="projects-chart" aria-label="Project count by year">
+        <svg id="projects-pie-plot" viewBox="-50 -50 100 100" role="img" aria-label="Pie chart of projects by year"></svg>
+        <ul class="legend" aria-label="Project years legend"></ul>
+      </div>
+      <input
+        class="searchBar"
+        type="search"
+        aria-label="Search projects"
+        placeholder="Search projects..."
+      >
       <div class="projects"></div>
     </section>
   </main>
