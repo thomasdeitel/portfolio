@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thomas Deitel: Code Meta-analysis</title>
+  <link rel="stylesheet" href="../style.css">
+  <script type="module" src="../global.js"></script>
+  <script type="module" src="main.js"></script>
+</head>
+<body>
+  <main>
+    <section aria-labelledby="meta-heading">
+      <h1 id="meta-heading">Code Meta-analysis</h1>
+      <p>This page analyzes the current portfolio codebase with line-level commit data and D3 visualizations.</p>
+      <div id="stats"></div>
+    </section>
+
+    <section aria-labelledby="commits-heading">
+      <h2 id="commits-heading">Commits by Time of Day</h2>
+      <p id="selection-count">No commits selected</p>
+      <div id="chart"></div>
+      <dl id="language-breakdown" class="stats"></dl>
+    </section>
+  </main>
+
+  <dl id="commit-tooltip" class="info tooltip" hidden>
+    <dt>Commit</dt>
+    <dd>
+      <a href="" id="commit-link" target="_blank" rel="noopener noreferrer"></a>
+    </dd>
+
+    <dt>Date</dt>
+    <dd id="commit-date"></dd>
+
+    <dt>Time</dt>
+    <dd id="commit-time"></dd>
+
+    <dt>Author</dt>
+    <dd id="commit-author"></dd>
+
+    <dt>Lines edited</dt>
+    <dd id="commit-lines"></dd>
+  </dl>
+</body>
+</html>
