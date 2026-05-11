@@ -417,6 +417,15 @@ button:focus-visible {
   margin-bottom: 0;
 }
 
+.hero-award {
+  background: color-mix(in oklch, var(--color-accent), canvas 86%);
+  border: 1px solid color-mix(in oklch, var(--color-accent), canvas 48%);
+  border-radius: 0.75rem;
+  font-weight: 800;
+  margin-top: 1rem;
+  padding: 0.75rem 0.85rem;
+}
+
 .home-hero img {
   border-radius: 1.25rem;
   box-shadow: 0 1.4rem 2.6rem oklch(30% 0.03 250 / 0.14);
