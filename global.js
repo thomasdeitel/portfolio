@@ -83,6 +83,7 @@ export function renderProjects(projects, containerElement, headingLevel = 'h2') 
     const title = project.title?.trim() || 'Untitled Project';
     const year = project.year?.toString().trim();
     const description = project.description?.trim() || 'Description coming soon.';
+    const award = project.award?.trim();
     const imageSource = resolveURL(project.image?.trim() || FALLBACK_PROJECT_IMAGE);
     const imageAlt = project.imageAlt?.trim() || `Preview image for ${title}`;
     const projectURL = project.url?.trim() ? resolveURL(project.url.trim()) : null;
@@ -120,6 +121,13 @@ export function renderProjects(projects, containerElement, headingLevel = 'h2') 
     descriptionElement.className = 'project-description';
     descriptionElement.textContent = description;
     projectInfo.append(descriptionElement);
+
+    if (award) {
+      const awardElement = document.createElement('p');
+      awardElement.className = 'project-award';
+      awardElement.textContent = award;
+      projectInfo.append(awardElement);
+    }
 
     if (year) {
       const yearElement = document.createElement('p');

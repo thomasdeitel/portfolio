@@ -299,6 +299,16 @@ button:focus-visible {
   color: var(--color-text);
 }
 
+.project-award {
+  background: color-mix(in oklch, var(--color-accent), canvas 88%);
+  border: 1px solid color-mix(in oklch, var(--color-accent), canvas 55%);
+  border-radius: 0.55rem;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.55rem 0.65rem;
+}
+
 .project-info {
   display: grid;
   gap: 0.35rem;
@@ -444,6 +454,22 @@ button:focus-visible {
   font-size: 1.8rem;
   font-weight: 700;
   margin: 0;
+}
+
+.award-callout {
+  background: color-mix(in oklch, var(--color-surface-alt), canvas 18%);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.award-callout h3 {
+  font-size: 1.25rem;
+  margin: 0 0 0.45rem;
+}
+
+.award-callout p:last-child {
+  margin-bottom: 0;
 }
 
 .stats {
