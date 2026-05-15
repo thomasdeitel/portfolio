@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750">
+  <rect width="1200" height="750" fill="#f7f5ef"/>
+  <path d="M-60 190 C130 130 260 230 430 165 S765 90 935 175 1160 250 1260 165" fill="none" stroke="#b9d7e7" stroke-width="74" stroke-linecap="round"/>
+  <path d="M-50 420 C170 325 330 460 540 385 S890 285 1260 420" fill="none" stroke="#d8d0bd" stroke-width="34" stroke-linecap="round"/>
+  <path d="M70 650 C230 520 420 560 560 460 S780 245 1120 275" fill="none" stroke="#d8d0bd" stroke-width="28" stroke-linecap="round"/>
+  <g fill="none" stroke="#1fa66a" stroke-linecap="round" opacity=".7">
+    <path d="M110 560 C250 455 360 460 505 365 S760 225 1095 250" stroke-width="14"/>
+    <path d="M165 285 C325 220 515 250 640 205 S850 160 1040 220" stroke-width="12"/>
+    <path d="M250 675 C365 565 450 575 575 480 S740 330 930 320" stroke-width="10"/>
+  </g>
+  <g stroke="#fff" stroke-width="5" opacity=".86">
+    <circle cx="315" cy="388" r="54" fill="darkorange"/>
+    <circle cx="500" cy="305" r="72" fill="steelblue"/>
+    <circle cx="665" cy="405" r="44" fill="#8d8f7c"/>
+    <circle cx="815" cy="278" r="66" fill="steelblue"/>
+    <circle cx="930" cy="468" r="36" fill="darkorange"/>
+    <circle cx="230" cy="515" r="28" fill="#8d8f7c"/>
+  </g>
+  <text x="70" y="105" fill="#17212b" font-family="system-ui, sans-serif" font-size="62" font-weight="800">Bikewatching</text>
+  <text x="74" y="158" fill="#66717c" font-family="system-ui, sans-serif" font-size="28">Boston bike lanes and Bluebike traffic flow</text>
+</svg>

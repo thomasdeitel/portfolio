@@ -1,5 +1,12 @@
 [
   {
+    "title": "Bikewatching",
+    "year": "2026",
+    "image": "projects/bikewatching/assets/preview.svg",
+    "description": "An interactive Mapbox and D3 visualization of Boston-area bike lanes, Bluebike station traffic, time-of-day filtering, and directional traffic flow.",
+    "url": "projects/bikewatching/"
+  },
+  {
     "title": "GroceryDB Expository Visualization",
     "year": "2026",
     "image": "projects/grocerydb-expository/output/grocerydb_expository_chart.png",
