@@ -1,7 +1,7 @@
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7.9.0/+esm';
 import mapboxgl from 'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/+esm';
 
-const MAPBOX_ACCESS_TOKEN = 'YOUR_MAPBOX_ACCESS_TOKEN_HERE';
+const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoidG9tZDEwIiwiYSI6ImNtcDdsMzl0NTAzYTEycnBzb3dhczIzdzcifQ.9y6X-UzjxapXgfZFcpf6-Q';
 const BOSTON_BIKE_LANES_URL = 'https://bostonopendata-boston.opendata.arcgis.com/datasets/boston::existing-bike-network-2022.geojson';
 const CAMBRIDGE_BIKE_LANES_URL = 'https://services1.arcgis.com/WnzC35krSYGuYov4/ArcGIS/rest/services/Bike_Facilities/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson';
 const BLUEBIKES_STATIONS_URL = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
