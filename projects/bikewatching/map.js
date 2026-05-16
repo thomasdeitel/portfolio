@@ -15,9 +15,10 @@ let arrivalsByMinute = Array.from({ length: MINUTES_IN_DAY }, () => []);
 const tokenWarning = document.querySelector('.map-token-warning');
 const loading = document.querySelector('.loading');
 const savedToken = localStorage.getItem('mapboxAccessToken');
-const configuredToken = savedToken?.startsWith('pk.') ? savedToken : MAPBOX_ACCESS_TOKEN;
+const hasValidTokenShape = (token) => token?.startsWith('pk.') && token.length > 20;
+const configuredToken = hasValidTokenShape(savedToken) ? savedToken : MAPBOX_ACCESS_TOKEN;
 
-if (!configuredToken || configuredToken === 'YOUR_MAPBOX_ACCESS_TOKEN_HERE') {
+if (!hasValidTokenShape(configuredToken) || configuredToken === 'YOUR_MAPBOX_ACCESS_TOKEN_HERE') {
   tokenWarning.hidden = false;
   loading.hidden = true;
   throw new Error('Mapbox access token is missing. Add it to map.js or localStorage.');
