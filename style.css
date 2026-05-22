@@ -531,9 +531,13 @@ button:focus-visible {
 }
 
 circle {
-  transition: fill 200ms, fill-opacity 200ms, transform 200ms;
+  transition: fill 200ms, fill-opacity 200ms, transform 200ms, r calc(var(--r, 3) * 80ms);
   transform-box: fill-box;
   transform-origin: center;
+
+  @starting-style {
+    r: 0;
+  }
 }
 
 circle:hover {
@@ -596,6 +600,119 @@ dl.info[hidden]:not(:hover, :focus-within) {
   stroke-dasharray: 5 3;
   stroke-opacity: 0.7;
   animation: marching-ants 2s linear infinite;
+}
+
+.commit-filter {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-block: 1rem;
+}
+
+.commit-filter label {
+  display: block;
+  font-weight: 700;
+}
+
+.commit-filter input {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+}
+
+.commit-filter time {
+  color: var(--color-muted);
+  margin-left: auto;
+}
+
+#scrolly-1 {
+  display: flex;
+  gap: 1.25rem;
+  position: relative;
+}
+
+#scrolly-1 > * {
+  flex: 1;
+  min-width: 0;
+}
+
+#scatter-story {
+  position: relative;
+}
+
+#scatter-plot {
+  align-self: flex-start;
+  height: 72vh;
+  position: sticky;
+  top: 1rem;
+}
+
+.step {
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-muted);
+  min-height: 72vh;
+  padding-block: 2rem;
+}
+
+.step:first-child {
+  padding-top: 0;
+}
+
+.step p {
+  margin-bottom: 0.75rem;
+}
+
+.step a {
+  font-weight: 700;
+}
+
+#files {
+  display: grid;
+  gap: 0.85rem 1rem;
+  grid-template-columns: minmax(12rem, 0.8fr) minmax(0, 2fr);
+  margin: 0;
+}
+
+#files > div {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+#files dt {
+  grid-column: 1;
+  min-width: 0;
+}
+
+#files code {
+  overflow-wrap: anywhere;
+}
+
+#files small {
+  color: var(--color-muted);
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 0.15rem;
+}
+
+#files dd {
+  align-content: start;
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15em;
+  grid-column: 2;
+  margin: 0;
+  padding-top: 0.35em;
+}
+
+.loc {
+  aspect-ratio: 1;
+  background: var(--color, steelblue);
+  border-radius: 50%;
+  display: flex;
+  width: 0.5em;
 }
 
 main {
@@ -756,6 +873,34 @@ main > section .legend {
 
   #profile-stats dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #scrolly-1 {
+    display: block;
+  }
+
+  #scatter-plot {
+    background: var(--color-surface);
+    height: auto;
+    margin-bottom: 1rem;
+    position: static;
+  }
+
+  .step {
+    min-height: auto;
+    padding-block: 1.25rem;
+  }
+
+  #files {
+    grid-template-columns: 1fr;
+  }
+
+  #files > div {
+    display: block;
+  }
+
+  #files dd {
+    margin-top: 0.35rem;
   }
 
   .projects-chart {

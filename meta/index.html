@@ -13,14 +13,29 @@
     <section aria-labelledby="meta-heading">
       <h1 id="meta-heading">Code Meta-analysis</h1>
       <p>This page analyzes the current portfolio codebase with line-level commit data and D3 visualizations.</p>
+      <div class="commit-filter">
+        <label for="commit-progress">Show commits until:</label>
+        <input type="range" id="commit-progress" min="0" max="100" value="100">
+        <time id="commit-time"></time>
+      </div>
       <div id="stats"></div>
     </section>
 
     <section aria-labelledby="commits-heading">
       <h2 id="commits-heading">Commits by Time of Day</h2>
-      <p id="selection-count">No commits selected</p>
-      <div id="chart"></div>
-      <dl id="language-breakdown" class="stats"></dl>
+      <div id="scrolly-1">
+        <div id="scatter-story"></div>
+        <div id="scatter-plot">
+          <p id="selection-count">No commits selected</p>
+          <div id="chart"></div>
+          <dl id="language-breakdown" class="stats"></dl>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="files-heading">
+      <h2 id="files-heading">The Race for the Biggest File</h2>
+      <dl id="files"></dl>
     </section>
   </main>
 
@@ -34,7 +49,7 @@
     <dd id="commit-date"></dd>
 
     <dt>Time</dt>
-    <dd id="commit-time"></dd>
+    <dd id="tooltip-commit-time"></dd>
 
     <dt>Author</dt>
     <dd id="commit-author"></dd>
