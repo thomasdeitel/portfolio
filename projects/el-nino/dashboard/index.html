@@ -1,0 +1,5137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interactive El Nino Pacific Visualization</title>
+  <link href="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@5.7.3/dist/maplibre-gl.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <style>
+    :root {
+      --ink: #172027;
+      --muted: #65737c;
+      --line: #d6dde1;
+      --page: #f5f1e8;
+      --panel: #ffffff;
+      --dark: #172027;
+      --warm: #c1341e;
+      --cool: #1d6fa3;
+      --green: #31764d;
+      --gold: #8a6a24;
+      --purple: #6d5aa8;
+      --shadow: 0 16px 38px rgba(23, 32, 39, 0.13);
+      --layer-accent: #e8a020;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y proximity;
+    }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+      overflow-x: hidden;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .site-hero {
+      position: relative;
+      min-height: 100svh;
+      display: grid;
+      align-items: center;
+      scroll-snap-align: start;
+      overflow: hidden;
+      padding: clamp(28px, 4.2vw, 56px) clamp(30px, 5vw, 72px) clamp(72px, 9vh, 96px);
+      background:
+        linear-gradient(115deg, rgba(193, 52, 30, 0.22), transparent 34%),
+        linear-gradient(290deg, rgba(29, 111, 163, 0.38), transparent 44%),
+        linear-gradient(180deg, #071018 0%, #102334 52%, #071018 100%);
+      color: #f7f4ec;
+      isolation: isolate;
+    }
+
+    .site-hero::before {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      z-index: -2;
+      background:
+        linear-gradient(100deg, transparent 0 20%, rgba(29, 111, 163, 0.22) 32%, transparent 46%),
+        linear-gradient(145deg, transparent 0 28%, rgba(232, 160, 32, 0.18) 40%, transparent 56%),
+        linear-gradient(210deg, transparent 0 35%, rgba(193, 52, 30, 0.2) 52%, transparent 66%);
+      background-size: 140% 140%;
+      animation: heroAtmosphere 16s ease-in-out infinite alternate;
+    }
+
+    .site-hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(90deg, rgba(7, 16, 24, 0.72), rgba(7, 16, 24, 0.2) 58%, rgba(7, 16, 24, 0.46)),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 52px);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      max-width: 980px;
+      display: grid;
+      gap: clamp(16px, 2.2vh, 24px);
+    }
+
+    .hero-kicker,
+    .hero-title,
+    .hero-hook,
+    .hero-copy,
+    .hero-question {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: heroReveal 620ms ease both;
+    }
+
+    .hero-kicker {
+      margin: 0;
+      color: #e8a020;
+      font-size: 0.78rem;
+      font-weight: 780;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      animation-delay: 80ms;
+    }
+
+    .hero-title {
+      margin: 0;
+      max-width: 980px;
+      font-size: clamp(3rem, 5.1vw, 5rem);
+      line-height: 0.94;
+      font-weight: 850;
+      text-wrap: balance;
+      animation-delay: 170ms;
+    }
+
+    .hero-hook {
+      margin: 0;
+      max-width: 660px;
+      color: #ffffff;
+      font-size: clamp(1.12rem, 1.65vw, 1.5rem);
+      line-height: 1.2;
+      font-weight: 760;
+      text-wrap: balance;
+      animation-delay: 290ms;
+    }
+
+    .hero-copy {
+      margin: 0;
+      max-width: 820px;
+      color: rgba(247, 244, 236, 0.78);
+      font-size: clamp(0.94rem, 1vw, 1.02rem);
+      line-height: 1.45;
+      animation-delay: 390ms;
+    }
+
+    .hero-question {
+      margin: 0;
+      max-width: 660px;
+      color: #ffffff;
+      font-size: clamp(1.02rem, 1.25vw, 1.22rem);
+      line-height: 1.28;
+      font-weight: 780;
+      animation-delay: 480ms;
+    }
+
+    .hero-scroll-cue {
+      position: absolute;
+      left: 50%;
+      bottom: clamp(22px, 5vh, 46px);
+      display: grid;
+      justify-items: center;
+      align-items: center;
+      gap: 7px;
+      color: rgba(247, 244, 236, 0.78);
+      font-size: 0.78rem;
+      line-height: 1;
+      font-weight: 720;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transform: translateX(-50%);
+    }
+
+    .hero-chevron {
+      width: 22px;
+      height: 22px;
+      border-right: 3px solid currentColor;
+      border-bottom: 3px solid currentColor;
+      transform: rotate(45deg);
+      animation: chevronBounce 1.7s ease-in-out infinite;
+    }
+
+    @keyframes heroReveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes heroAtmosphere {
+      from {
+        transform: translate3d(-1.4%, -1%, 0);
+        background-position: 0% 42%;
+      }
+
+      to {
+        transform: translate3d(1.6%, 1%, 0);
+        background-position: 100% 58%;
+      }
+    }
+
+    @keyframes scrollCue {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(4px);
+      }
+    }
+
+    @keyframes chevronBounce {
+      0%,
+      100% {
+        transform: translateY(0) rotate(45deg);
+      }
+
+      50% {
+        transform: translateY(5px) rotate(45deg);
+      }
+    }
+
+    .app {
+      min-height: 100vh;
+      display: block;
+      background: var(--page);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.82rem;
+      line-height: 1.08;
+      font-weight: 780;
+    }
+
+    .intro-transition {
+      margin: 18px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 1.02rem;
+      max-width: 720px;
+    }
+
+    .sidebar-link {
+      display: block;
+      border: 1px solid #f7f4ec;
+      border-radius: 8px;
+      background: #f7f4ec;
+      color: var(--dark);
+      padding: 10px 12px;
+      text-align: center;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 760;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .label {
+      color: #5d6870;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 760;
+    }
+
+    .layer-buttons {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .layer-button-label {
+      font-weight: 760;
+    }
+
+    .layer-buttons button,
+    .mini-toggle button {
+      border: 1px solid rgba(23, 32, 39, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      min-height: 38px;
+      padding: 8px 11px;
+      cursor: pointer;
+      text-align: left;
+      transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        color 160ms ease,
+        box-shadow 180ms ease,
+        transform 160ms ease;
+    }
+
+    .layer-buttons button:hover,
+    .mini-toggle button:hover {
+      background: #ffffff;
+      border-color: color-mix(in srgb, var(--layer-accent) 22%, transparent);
+      transform: translateY(-1px);
+    }
+
+    .layer-buttons button[aria-pressed="true"] {
+      background: var(--dark);
+      color: #f7f4ec;
+      border-color: var(--dark);
+      box-shadow: inset 0 3px 0 var(--layer-accent), 0 8px 20px rgba(23, 32, 39, 0.14);
+    }
+
+    .mini-toggle button[aria-pressed="true"] {
+      background: #1d6fa3;
+      color: #ffffff;
+      border-color: #1d6fa3;
+      box-shadow: 0 0 0 2px rgba(29, 111, 163, 0.28);
+    }
+
+    .mini-toggle {
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      gap: 8px;
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .fact {
+      min-height: 104px;
+      border-top: 3px solid var(--dark);
+      border-radius: 0;
+      padding: 14px 4px 0;
+      background: transparent;
+    }
+
+    .fact strong {
+      display: block;
+      color: var(--dark);
+      font-size: clamp(2rem, 3.6vw, 3.5rem);
+      line-height: 0.92;
+      font-weight: 850;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .fact-period strong {
+      font-size: clamp(2rem, 3vw, 3.5rem);
+    }
+
+    .fact span {
+      display: block;
+      margin-top: 10px;
+      color: #4f5d65;
+      font-size: 0.82rem;
+      line-height: 1.3;
+      font-weight: 680;
+    }
+
+    main {
+      padding: 0;
+      min-width: 0;
+      display: block;
+    }
+
+    .article-intro,
+    .facts-strip {
+      padding: clamp(36px, 6vw, 72px) clamp(22px, 5vw, 72px);
+    }
+
+    .article-intro {
+      background: #fbfaf6;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .article-intro-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    .article-kicker {
+      margin: 0;
+      color: var(--gold);
+      font-size: 0.78rem;
+      font-weight: 820;
+      letter-spacing: 0.09em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .article-intro h2 {
+      margin: 10px 0 0;
+      max-width: 880px;
+      font-size: clamp(2rem, 4vw, 4rem);
+      line-height: 1;
+      font-weight: 830;
+      text-wrap: balance;
+    }
+
+    .article-intro-body {
+      margin: 18px 0 0;
+      max-width: 850px;
+      color: #4f5d65;
+      font-size: clamp(1.02rem, 1.35vw, 1.2rem);
+      line-height: 1.58;
+    }
+
+    .article-data-note {
+      margin: 14px 0 0;
+      max-width: 760px;
+      color: #5d6870;
+      font-size: 0.96rem;
+      line-height: 1.5;
+      font-weight: 640;
+    }
+
+    .facts-strip {
+      padding-top: 30px;
+      padding-bottom: 34px;
+      background:
+        linear-gradient(180deg, #f0e8d9 0%, #f7f3ea 100%);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .facts-strip-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .facts-strip-heading {
+      display: grid;
+      gap: 6px;
+      max-width: 700px;
+    }
+
+    .facts-strip-heading h3 {
+      margin: 0;
+      color: var(--ink);
+      font-size: clamp(1.25rem, 2.2vw, 2rem);
+      line-height: 1.12;
+      font-weight: 820;
+    }
+
+    .facts-strip-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+
+    .topbar {
+      display: none;
+    }
+
+    .topbar .caption-kicker {
+      margin: 0;
+      color: var(--layer-accent);
+      font-size: 0.72rem;
+      font-weight: 820;
+      letter-spacing: 0.09em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .caption-heading {
+      margin: 0;
+      color: #ffffff;
+      font-size: clamp(1.12rem, 1.65vw, 1.42rem);
+      line-height: 1.12;
+      font-weight: 820;
+      text-wrap: balance;
+    }
+
+    .topbar .caption-body {
+      margin: 0;
+      color: rgba(247, 244, 236, 0.76);
+      font-size: 0.84rem;
+      line-height: 1.42;
+    }
+
+    .caption-current {
+      display: none;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      color: rgba(247, 244, 236, 0.96);
+      font-size: 0.82rem;
+      font-weight: 760;
+      line-height: 1.25;
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+    }
+
+    .topbar p {
+      margin: 0;
+      color: rgba(247, 244, 236, 0.68);
+      font-size: 0.74rem;
+      line-height: 1.35;
+      max-width: 100%;
+    }
+
+    #layerDescription {
+      display: none;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .current-view-label,
+    .map-intro-label {
+      margin: 0;
+      color: var(--gold);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .narrative-hook {
+      position: relative;
+      min-height: clamp(300px, 44vh, 360px);
+      padding: clamp(26px, 4vh, 34px) clamp(24px, 4vw, 52px);
+      display: grid;
+      align-content: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 82% 24%, rgba(29, 111, 163, 0.5), transparent 28%),
+        radial-gradient(circle at 12% 78%, rgba(193, 52, 30, 0.38), transparent 30%),
+        linear-gradient(135deg, #0b1824 0%, #172027 54%, #071018 100%);
+      color: #f7f4ec;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .narrative-hook::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(232, 160, 32, 0.18), transparent 34%),
+        linear-gradient(180deg, transparent, rgba(2, 4, 8, 0.28));
+      pointer-events: none;
+    }
+
+    .hook-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+    }
+
+    .hook-kicker {
+      margin: 0 0 10px;
+      color: #e8a020;
+      font-size: 0.74rem;
+      font-weight: 780;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hook-title {
+      margin: 0;
+      max-width: 720px;
+      font-size: clamp(2rem, 3.35vw, 3rem);
+      line-height: 1.02;
+      font-weight: 800;
+      text-wrap: balance;
+    }
+
+    .hook-copy {
+      margin: 14px 0 0;
+      max-width: 620px;
+      color: rgba(247, 244, 236, 0.78);
+      font-size: clamp(1rem, 1.24vw, 1.12rem);
+      line-height: 1.5;
+    }
+
+    .hook-question {
+      margin: 14px 0 0;
+      color: #ffffff;
+      font-size: clamp(1.05rem, 1.5vw, 1.28rem);
+      line-height: 1.35;
+      font-weight: 760;
+    }
+
+    .hook-meta-row {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .hook-chip,
+    .hook-cue {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 0.78rem;
+      line-height: 1.2;
+      font-weight: 680;
+    }
+
+    .hook-chip {
+      background: rgba(232, 160, 32, 0.16);
+      color: #ffe0a0;
+    }
+
+    .hook-cue {
+      background: rgba(29, 111, 163, 0.2);
+      color: rgba(247, 244, 236, 0.9);
+    }
+
+    .map-readout {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 2;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: rgba(23, 32, 39, 0.86);
+      color: #f7f4ec;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 9px 11px;
+      max-width: 230px;
+      font-size: 0.74rem;
+      line-height: 1.2;
+      opacity: 0;
+      transform: translate3d(var(--hover-x, 16px), var(--hover-y, 16px), 0);
+      pointer-events: none;
+      transition: opacity 120ms ease;
+    }
+
+    .map-readout.is-visible {
+      opacity: 1;
+    }
+
+    body:not(.globe-focus-active) .map-readout {
+      opacity: 0 !important;
+      pointer-events: none;
+    }
+
+    .map-readout strong {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 650;
+      color: rgba(247, 244, 236, 0.7);
+    }
+
+    .map-readout span {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px 7px;
+      margin-top: 2px;
+      color: rgba(247, 244, 236, 0.8);
+      font-size: 0.78rem;
+      line-height: 1.2;
+    }
+
+    #hoverText .readout-layer {
+      color: rgba(247, 244, 236, 0.82);
+      font-weight: 720;
+    }
+
+    #hoverText .readout-value {
+      color: #f7f4ec;
+      font-weight: 780;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #hoverText .readout-meaning {
+      display: none;
+    }
+
+    .scrolly-exhibit {
+      position: relative;
+      min-height: auto;
+      background: #020408;
+      color: #f7f4ec;
+    }
+
+    .scrolly-exhibit .viz-panel {
+      position: relative;
+      top: auto;
+      height: clamp(620px, 82vh, 880px);
+      min-height: 620px;
+      z-index: 1;
+    }
+
+    body.globe-focus-active {
+      overflow: hidden;
+    }
+
+    body.globe-focus-active .scrolly-exhibit .viz-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      height: 100dvh;
+      min-height: 0;
+      overscroll-behavior: contain;
+      touch-action: none;
+    }
+
+    .scrolly-exhibit .map-instruction {
+      display: flex;
+      margin-top: 0;
+      border-color: rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(247, 244, 236, 0.84);
+      padding: 6px 9px;
+      font-size: 0.76rem;
+    }
+
+    .map-instruction-help {
+      color: rgba(247, 244, 236, 0.78);
+      font-weight: 680;
+    }
+
+    .globe-entry-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(29, 111, 163, 0.18), transparent 36%),
+        rgba(2, 4, 8, 0.5);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      color: #f7f4ec;
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 180ms ease;
+    }
+
+    body.globe-focus-active .globe-entry-overlay {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .globe-entry-panel {
+      width: min(430px, 100%);
+      border: 1px solid rgba(232, 160, 32, 0.38);
+      border-radius: 12px;
+      padding: 20px 22px;
+      background: rgba(23, 32, 39, 0.88);
+      box-shadow: 0 22px 54px rgba(2, 4, 8, 0.45);
+      text-align: center;
+    }
+
+    .globe-entry-panel strong {
+      display: block;
+      color: #ffffff;
+      font-size: clamp(1.25rem, 2vw, 1.65rem);
+      line-height: 1.1;
+      font-weight: 830;
+    }
+
+    .globe-entry-panel span {
+      display: block;
+      margin: 8px auto 0;
+      max-width: 340px;
+      color: rgba(247, 244, 236, 0.78);
+      font-size: 0.9rem;
+      line-height: 1.4;
+      font-weight: 620;
+    }
+
+    .globe-entry-panel button,
+    .globe-exit-btn {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 820;
+    }
+
+    .globe-entry-panel button {
+      margin-top: 16px;
+      border-radius: 9px;
+      padding: 10px 16px;
+      background: #e8a020;
+      color: #172027;
+      box-shadow: 0 12px 28px rgba(2, 4, 8, 0.28);
+    }
+
+    .globe-exit-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 31;
+      display: none;
+      border-radius: 8px;
+      padding: 9px 13px;
+      background: #c1341e;
+      color: #ffffff;
+      box-shadow: 0 14px 32px rgba(2, 4, 8, 0.34);
+    }
+
+    body.globe-focus-active .globe-exit-btn {
+      display: inline-flex;
+    }
+
+    .scrolly-exhibit .map-label-strip {
+      display: none;
+    }
+
+    .map-legend-overlay {
+      display: none;
+    }
+
+    .map-legend-overlay .legend-row {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .map-legend-overlay .legend {
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .map-legend-overlay .legend-labels {
+      color: rgba(247, 244, 236, 0.78);
+      font-size: 0.68rem;
+      line-height: 1.2;
+    }
+
+    .map-legend-overlay .legend-labels span {
+      min-width: 0;
+    }
+
+    .map-legend-overlay .method {
+      color: rgba(247, 244, 236, 0.66);
+      font-size: 0.7rem;
+      line-height: 1.32;
+    }
+
+    .scroll-callout {
+      display: none;
+    }
+
+    .scroll-callout.is-prominent {
+      display: none;
+    }
+
+    .scroll-callout-text {
+      display: block;
+    }
+
+    .scroll-callout small {
+      display: block;
+      margin-top: 7px;
+      color: rgba(232, 160, 32, 0.82);
+      font-size: 0.7rem;
+      line-height: 1.2;
+      font-weight: 780;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .story-steps {
+      display: none;
+    }
+
+    .scrolly-exhibit .timeline-toggle {
+      bottom: 214px;
+    }
+
+    .story-step {
+      min-height: 190px;
+      display: grid;
+      align-content: center;
+      gap: 8px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: transparent;
+      box-shadow: none;
+      opacity: 0;
+      transition:
+        opacity 220ms ease,
+        transform 220ms ease,
+        border-color 220ms ease,
+        background 220ms ease;
+      pointer-events: auto;
+    }
+
+    .story-step.is-active {
+      opacity: 0;
+    }
+
+    .story-step-kicker {
+      margin: 0;
+      color: var(--layer-accent);
+      font-size: 0.72rem;
+      font-weight: 820;
+      letter-spacing: 0.09em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .story-step h3 {
+      margin: 0;
+      font-size: clamp(1.35rem, 2vw, 1.75rem);
+      line-height: 1.08;
+      font-weight: 820;
+      text-wrap: balance;
+    }
+
+    .story-step p:last-child {
+      margin: 0;
+      color: rgba(247, 244, 236, 0.76);
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .map-intro {
+      padding: 34px 24px 24px;
+      background: #fbfaf6;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .map-intro-inner {
+      max-width: 850px;
+    }
+
+    .map-intro h2 {
+      margin: 8px 0 0;
+      font-size: clamp(1.25rem, 1.65vw, 1.55rem);
+      line-height: 1.18;
+      font-weight: 780;
+    }
+
+    .map-intro p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.5;
+    }
+
+    .map-instruction {
+      display: inline-block;
+      margin-top: 13px;
+      border: 1px solid rgba(29, 111, 163, 0.2);
+      border-radius: 999px;
+      background: rgba(29, 111, 163, 0.08);
+      color: #234355;
+      padding: 7px 11px;
+      font-size: 0.82rem;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    .viz-panel {
+      position: relative;
+      height: clamp(520px, 72vh, 760px);
+      display: block;
+      overflow: hidden;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: #000000;
+    }
+
+    .map-wrap {
+      position: absolute;
+      inset: 0;
+      background: #000000;
+      min-height: 0;
+    }
+
+    #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-loading-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 18;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(2, 4, 8, 0.58);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      color: #f7f4ec;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+    }
+
+    .map-loading-overlay.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .map-loading-panel {
+      width: min(360px, 100%);
+      border: 1px solid rgba(232, 160, 32, 0.34);
+      border-radius: 10px;
+      padding: 18px 20px;
+      background: rgba(23, 32, 39, 0.9);
+      box-shadow: 0 22px 48px rgba(2, 4, 8, 0.42);
+      text-align: center;
+    }
+
+    .map-loading-panel strong {
+      display: block;
+      color: #e8a020;
+      font-size: 0.82rem;
+      line-height: 1.2;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .map-loading-panel span {
+      display: block;
+      margin-top: 8px;
+      color: rgba(247, 244, 236, 0.82);
+      font-size: 0.9rem;
+      line-height: 1.35;
+      font-weight: 650;
+    }
+
+    .timeline-wrap {
+      position: relative;
+      border: 1px solid rgba(23, 32, 39, 0.12);
+      border-radius: 10px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 243, 234, 0.98));
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .timeline {
+      display: block;
+      width: 100%;
+      height: 210px;
+      cursor: crosshair;
+    }
+
+    .timeline .axis path,
+    .timeline .axis line {
+      stroke: #b8c1c6;
+      shape-rendering: crispEdges;
+    }
+
+    .timeline .axis text {
+      fill: #53616a;
+      font-size: 0.72rem;
+      font-weight: 650;
+    }
+
+    .timeline .axis-label {
+      fill: #4f5d65;
+      font-size: 0.7rem;
+      font-weight: 760;
+    }
+
+    .timeline .threshold-label {
+      fill: #f7f4ec;
+      font-size: 0.68rem;
+      font-weight: 820;
+      letter-spacing: 0.02em;
+    }
+
+    .timeline .threshold-label-bg {
+      fill: rgba(193, 52, 30, 0.86);
+      stroke: rgba(255, 255, 255, 0.65);
+      stroke-width: 0.5;
+    }
+
+    .timeline .threshold-line {
+      stroke: rgba(193, 52, 30, 0.72);
+      stroke-width: 1.2;
+      stroke-dasharray: 4 4;
+    }
+
+    .timeline .zero-line {
+      stroke: rgba(23, 32, 39, 0.35);
+      stroke-width: 1;
+    }
+
+    .timeline .selected-marker {
+      stroke: var(--dark);
+      stroke-width: 2;
+      pointer-events: none;
+    }
+
+    .timeline-bar {
+      transition: opacity 120ms ease;
+      shape-rendering: crispEdges;
+    }
+
+    .timeline-bar:hover {
+      opacity: 0.78;
+    }
+
+    .timeline-tooltip {
+      position: absolute;
+      z-index: 2;
+      min-width: 170px;
+      padding: 8px 10px;
+      border: 1px solid rgba(23, 32, 39, 0.14);
+      border-radius: 8px;
+      background: rgba(23, 32, 39, 0.92);
+      color: #f7f4ec;
+      box-shadow: 0 10px 28px rgba(23, 32, 39, 0.24);
+      font-size: 0.78rem;
+      line-height: 1.35;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -108%);
+      transition: opacity 120ms ease;
+    }
+
+    .timeline-tooltip strong {
+      display: block;
+      font-size: 0.82rem;
+      margin-bottom: 2px;
+    }
+
+    .timeline-tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .timeline-section {
+      padding: clamp(42px, 6vw, 76px) clamp(22px, 5vw, 72px);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(232, 160, 32, 0.12), transparent 30%),
+        linear-gradient(180deg, #fbfaf6 0%, #f0e8d9 100%);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .timeline-section-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .timeline-section-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+    }
+
+    .timeline-kicker {
+      margin: 0 0 8px;
+      color: var(--gold);
+      font-size: 0.76rem;
+      line-height: 1.2;
+      font-weight: 840;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .timeline-section h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: clamp(1.75rem, 3.3vw, 3rem);
+      line-height: 1.1;
+      font-weight: 820;
+      text-wrap: balance;
+    }
+
+    .timeline-rule-card {
+      min-width: 220px;
+      border-left: 3px solid var(--gold);
+      padding: 9px 0 9px 14px;
+      color: #4f5d65;
+      font-size: 0.84rem;
+      line-height: 1.35;
+      font-weight: 680;
+    }
+
+    .timeline-rule-card strong {
+      display: block;
+      color: var(--ink);
+      font-size: 1.12rem;
+      line-height: 1;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .timeline-rule-card span {
+      display: block;
+      margin-top: 6px;
+    }
+
+    .timeline-section .timeline-story {
+      max-width: none;
+    }
+
+    .timeline-section .timeline-wrap {
+      background: #ffffff;
+      box-shadow: 0 18px 44px rgba(23, 32, 39, 0.12);
+    }
+
+    .timeline-section .viz-footer {
+      position: static;
+      z-index: auto;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .legacy-timeline-control {
+      display: none;
+    }
+
+    .timeline-story {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px 22px;
+      align-items: end;
+    }
+
+    .timeline-story h3 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 1rem;
+      line-height: 1.18;
+      font-weight: 780;
+    }
+
+    .timeline-story p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.5;
+    }
+
+    .timeline-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      color: #4e5c64;
+      font-size: 0.8rem;
+      font-weight: 760;
+    }
+
+    .timeline-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid rgba(23, 32, 39, 0.1);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.66);
+    }
+
+    .timeline-legend span::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--dot-color);
+    }
+
+    .map-next-cue {
+      width: 100%;
+      margin: 0 auto;
+      max-width: 1080px;
+      padding: 0;
+      color: rgba(247, 244, 236, 0.76);
+      font-size: 0.78rem;
+      line-height: 1.3;
+      font-weight: 820;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .map-next-cue::before {
+      content: "";
+      display: inline-block;
+      width: 28px;
+      height: 2px;
+      margin-right: 10px;
+      vertical-align: middle;
+      background: #e8a020;
+    }
+
+
+    .viz-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 5;
+      border-top: 1px solid var(--line);
+      padding: 14px 16px 16px;
+      display: grid;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transform: translateY(100%);
+      transition: transform 280ms ease;
+    }
+
+    .viz-footer.tf-visible {
+      transform: translateY(0);
+    }
+
+    .timeline-toggle {
+      position: absolute;
+      bottom: 14px;
+      right: 16px;
+      z-index: 20;
+      background: rgba(23, 32, 39, 0.82);
+      color: #f7f4ec;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: background 120ms ease;
+    }
+
+    .timeline-toggle:hover {
+      background: rgba(23, 32, 39, 0.97);
+    }
+
+    .timeline-toggle[aria-pressed="true"] {
+      background: var(--dark);
+    }
+
+    .legend-row {
+      display: grid;
+      grid-template-columns: minmax(210px, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .legend {
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid #cbd3d6;
+      background: linear-gradient(90deg, var(--cool), #f8f4ee 50%, var(--warm));
+    }
+
+    .legend-labels {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 12px;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .legend-labels span:nth-child(2) {
+      text-align: center;
+    }
+
+    .legend-labels span:nth-child(3) {
+      text-align: right;
+    }
+
+    .method {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.42;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        display: block;
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      main {
+        max-width: 100vw;
+        overflow-x: hidden;
+        height: auto;
+        overflow-y: visible;
+      }
+
+      h1,
+      p,
+      button {
+        overflow-wrap: break-word;
+      }
+
+      .article-intro,
+      .facts-strip {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .layer-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .layer-buttons button,
+      .mini-toggle button {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .topbar {
+        display: none;
+      }
+
+      .narrative-hook {
+        min-height: 320px;
+        padding: 34px 18px;
+      }
+
+      .map-intro {
+        padding: 26px 18px 20px;
+      }
+
+      .viz-panel {
+        position: relative;
+        top: auto;
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: none;
+        display: grid;
+        grid-template-rows: minmax(360px, 60vh) auto;
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+      }
+
+      .scrolly-exhibit {
+        min-height: auto;
+      }
+
+      .scrolly-exhibit .viz-panel {
+        position: relative;
+        top: auto;
+        height: 72vh;
+        min-height: 500px;
+        z-index: 1;
+      }
+
+      .scrolly-exhibit .map-label-strip {
+        display: none;
+      }
+
+      .map-legend-overlay {
+        display: none;
+      }
+
+      .story-steps {
+        display: none;
+      }
+
+      .story-step {
+        min-height: auto;
+      }
+
+      .map-wrap {
+        position: relative;
+        inset: auto;
+        min-height: 360px;
+        width: 100%;
+        min-width: 0;
+      }
+
+      .viz-footer {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        transform: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        background: #ffffff;
+        z-index: auto;
+      }
+
+      .timeline-toggle {
+        display: none;
+      }
+
+      .timeline {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .timeline-section-header,
+      .timeline-story {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .timeline-rule-card {
+        min-width: 0;
+      }
+
+      .timeline-legend {
+        justify-content: flex-start;
+      }
+
+      .game-section {
+        margin: 22px 18px;
+      }
+
+      .takeaway-section {
+        grid-template-columns: 1fr;
+      }
+
+      .map-next-cue {
+        padding: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .site-hero {
+        padding: 26px 20px 78px;
+      }
+
+      .hero-title {
+        font-size: clamp(2.65rem, 14vw, 3.35rem);
+      }
+
+      main {
+        padding: 0;
+      }
+
+      .facts,
+      .mini-toggle,
+      .layer-buttons,
+      .legend-row {
+        grid-template-columns: 1fr;
+      }
+
+      .scrolly-exhibit {
+        display: block;
+      }
+
+      .scrolly-exhibit .viz-panel {
+        position: relative;
+        top: auto;
+        height: auto;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: minmax(380px, 58vh) auto;
+      }
+
+      .story-steps {
+        display: none;
+      }
+
+      .topbar {
+        display: none;
+      }
+
+      .map-readout {
+        top: 0;
+        left: 0;
+        display: block;
+        max-width: min(190px, calc(100% - 20px));
+      }
+
+      .map-legend-overlay {
+        display: none;
+      }
+
+      h1 {
+        font-size: 1.55rem;
+      }
+
+      .hook-title {
+        font-size: 2rem;
+      }
+
+      .hook-meta-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .map-instruction {
+        border-radius: 8px;
+      }
+
+      .closing-section {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .game-section {
+        margin: 0;
+      }
+
+      .takeaway-stat strong {
+        font-size: clamp(2rem, 14vw, 3.2rem);
+      }
+    }
+
+    .closing-section {
+      padding: clamp(42px, 6vw, 82px) clamp(22px, 5vw, 72px);
+      background: #172027;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f7f4ec;
+    }
+
+    .closing-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 26px;
+    }
+
+    /* ── Quiz Game ─────────────────────────────────────────── */
+    .game-section {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(247, 244, 236, 0.16);
+      border-radius: 10px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 244, 238, 0.98));
+      box-shadow: 0 20px 46px rgba(2, 4, 8, 0.28);
+      padding: clamp(22px, 3vw, 32px);
+      display: grid;
+      gap: 0;
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .game-section::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--gold), var(--warm), var(--cool));
+      opacity: 0.95;
+    }
+
+    .game-intro-header {
+      margin: 0 0 12px;
+      color: #172027;
+      font-size: clamp(1.55rem, 2.8vw, 2.35rem);
+      line-height: 1.08;
+      font-weight: 830;
+      text-wrap: balance;
+    }
+
+    #gameIntro::before {
+      content: "Interactive check";
+      display: block;
+      margin-bottom: 10px;
+      color: #e8a020;
+      font-size: 0.76rem;
+      line-height: 1.2;
+      font-weight: 840;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .game-intro-text {
+      margin: 0 0 20px;
+      color: #53616a;
+      font-size: clamp(0.98rem, 1.3vw, 1.12rem);
+      line-height: 1.55;
+      max-width: 820px;
+    }
+
+    .btn-start {
+      border: none;
+      border-radius: 8px;
+      background: #e8a020;
+      color: #172027;
+      padding: 11px 22px;
+      font: inherit;
+      font-weight: 820;
+      font-size: 0.92rem;
+      cursor: pointer;
+      width: fit-content;
+    }
+
+    .btn-start:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .btn-start:not(:disabled):hover {
+      opacity: 0.88;
+    }
+
+    .takeaway-section {
+      max-width: 1080px;
+      margin: 0 auto;
+      border: 1px solid rgba(232, 160, 32, 0.26);
+      border-radius: 12px;
+      background:
+        linear-gradient(120deg, rgba(193, 52, 30, 0.16), rgba(29, 111, 163, 0.12)),
+        rgba(2, 4, 8, 0.42);
+      box-shadow: 0 24px 64px rgba(2, 4, 8, 0.3);
+      padding: clamp(26px, 4vw, 46px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+      gap: clamp(22px, 4vw, 42px);
+      align-items: end;
+    }
+
+    .takeaway-section h2 {
+      margin: 0;
+      color: #ffffff;
+      font-size: clamp(2rem, 4.6vw, 4.2rem);
+      line-height: 0.98;
+      font-weight: 850;
+      text-wrap: balance;
+    }
+
+    .takeaway-section p {
+      margin: 14px 0 0;
+      color: rgba(247, 244, 236, 0.76);
+      font-size: clamp(1rem, 1.35vw, 1.16rem);
+      line-height: 1.58;
+      max-width: 780px;
+    }
+
+    .takeaway-stat {
+      max-width: 100%;
+      border: 1px solid rgba(232, 160, 32, 0.34);
+      border-radius: 10px;
+      background: rgba(232, 160, 32, 0.13);
+      color: #f7f4ec;
+      padding: 18px 20px;
+      font-size: 1rem;
+      line-height: 1.38;
+      font-weight: 760;
+    }
+
+    .takeaway-stat strong {
+      display: block;
+      color: #e8a020;
+      font-size: clamp(2.2rem, 4.5vw, 4.6rem);
+      line-height: 0.9;
+      font-weight: 860;
+      white-space: nowrap;
+    }
+
+    .takeaway-stat span {
+      display: block;
+      margin-top: 10px;
+    }
+
+    .game-body {
+      display: grid;
+      gap: 18px;
+    }
+
+    .game-header-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 4px;
+    }
+
+    .game-progress-label,
+    .game-score-label {
+      flex: 0 0 auto;
+      color: #53616a;
+      font-size: 0.82rem;
+      white-space: nowrap;
+      font-weight: 760;
+    }
+
+    .game-score-label {
+      font-weight: 800;
+      color: #172027;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      border-radius: 999px;
+      background: #dce4e8;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--layer-accent);
+      border-radius: 999px;
+      transition: width 320ms ease;
+    }
+
+    #gameCard {
+      display: grid;
+      gap: 16px;
+    }
+
+    .game-question {
+      margin: 0;
+      font-size: clamp(1.08rem, 1.55vw, 1.34rem);
+      font-weight: 760;
+      line-height: 1.32;
+      color: #172027;
+      text-wrap: balance;
+    }
+
+    .game-options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .game-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid rgba(23, 32, 39, 0.13);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--ink);
+      padding: 13px 15px;
+      cursor: pointer;
+      text-align: left;
+      font: inherit;
+      font-size: clamp(0.9rem, 1.08vw, 1rem);
+      line-height: 1.35;
+      box-shadow: 0 1px 0 rgba(23, 32, 39, 0.04);
+      transition: border-color 150ms ease, background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    .game-option:hover:not(:disabled) {
+      border-color: rgba(232, 160, 32, 0.5);
+      background: #fffaf0;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(23, 32, 39, 0.08);
+    }
+
+    .game-option:disabled {
+      cursor: default;
+    }
+
+    .game-option:disabled:not(.opt-correct):not(.opt-wrong) {
+      opacity: 0.68;
+    }
+
+    .game-option.opt-correct {
+      border-color: #4d8b5f;
+      background: #edf7f0;
+      color: #2e6b42;
+      box-shadow: inset 0 0 0 1px rgba(77, 139, 95, 0.18);
+    }
+
+    .game-option.opt-wrong {
+      border-color: #c1341e;
+      background: #fff0ed;
+      color: #9f2c1d;
+      box-shadow: inset 0 0 0 1px rgba(193, 52, 30, 0.15);
+    }
+
+    .opt-letter {
+      flex: 0 0 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #e7ecef;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-option.opt-correct .opt-letter {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .game-option.opt-wrong .opt-letter {
+      background: var(--warm);
+      color: #fff;
+    }
+
+    .game-feedback {
+      margin-top: 4px;
+      border: 1px solid #d5dde1;
+      border-left: 4px solid var(--gold);
+      border-radius: 9px;
+      background: #f4f7f8;
+      padding: 15px 16px;
+      display: grid;
+      gap: 9px;
+    }
+
+    .game-feedback:has(.feedback-verdict.is-correct) {
+      border-left-color: #4d8b5f;
+      background: #f2f8f4;
+    }
+
+    .game-feedback:has(.feedback-verdict.is-wrong) {
+      border-left-color: #c1341e;
+      background: #fff5f2;
+    }
+
+    .feedback-verdict {
+      margin: 0;
+      font-weight: 820;
+      font-size: 1rem;
+      line-height: 1.2;
+    }
+
+    .feedback-verdict.is-correct { color: #2e6b42; }
+    .feedback-verdict.is-wrong   { color: #c1341e; }
+
+    .feedback-explanation {
+      margin: 0;
+      color: #53616a;
+      font-size: 0.93rem;
+      line-height: 1.5;
+      max-width: 880px;
+    }
+
+    .game-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+
+    .btn-view-map {
+      border: 1px solid #cbd3d6;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #172027;
+      padding: 9px 14px;
+      font: inherit;
+      font-size: 0.87rem;
+      font-weight: 720;
+      cursor: pointer;
+    }
+
+    .btn-view-map:hover {
+      border-color: #e8a020;
+    }
+
+    .btn-next {
+      border: none;
+      border-radius: 8px;
+      background: #172027;
+      color: #f7f4ec;
+      padding: 9px 18px;
+      font: inherit;
+      font-size: 0.87rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-next:hover { opacity: 0.9; }
+
+    .game-results {
+      text-align: center;
+      padding: 12px 0 4px;
+    }
+
+    .results-inner {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .score-ring {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      background: var(--dark);
+      color: #f7f4ec;
+      font-size: 1.55rem;
+      font-weight: 780;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #resultsMessage {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.48;
+      max-width: 440px;
+    }
+
+    .btn-retry {
+      border: none;
+      border-radius: 8px;
+      background: var(--dark);
+      color: #f7f4ec;
+      padding: 11px 22px;
+      font: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-retry:hover { opacity: 0.88; }
+
+    .hook-inner {
+      animation: hookIntro 520ms ease both;
+    }
+
+    .reveal-section {
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 420ms ease, transform 420ms ease;
+    }
+
+    .reveal-section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @keyframes hookIntro {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+      }
+
+      .reveal-section {
+        opacity: 1;
+        transform: none;
+      }
+
+      .hero-kicker,
+      .hero-title,
+      .hero-hook,
+      .hero-copy,
+      .hero-question {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* --- Back-to-quiz floating banner --- */
+    .back-to-quiz-banner {
+      position: fixed;
+      bottom: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: var(--dark);
+      color: #f7f4ec;
+      border-radius: 100px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      box-shadow: 0 8px 28px rgba(23, 32, 39, 0.38);
+      transition: bottom 320ms cubic-bezier(0.34, 1.3, 0.64, 1);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .back-to-quiz-banner.is-visible {
+      bottom: 24px;
+      pointer-events: all;
+    }
+
+    .back-to-quiz-banner > span {
+      color: rgba(247, 244, 236, 0.72);
+    }
+
+    .back-to-quiz-banner button {
+      background: var(--warm);
+      color: #ffffff;
+      border: none;
+      border-radius: 100px;
+      padding: 7px 16px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 760;
+    }
+
+    .back-to-quiz-banner button:hover {
+      opacity: 0.88;
+    }
+
+    .feedback-map-hint {
+      margin: 8px 0 4px;
+      max-width: 820px;
+      padding: 9px 12px;
+      background: rgba(29, 111, 163, 0.09);
+      border-left: 3px solid var(--cool);
+      border-radius: 0 7px 7px 0;
+      font-size: 0.88rem;
+      color: #53616a;
+      line-height: 1.45;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       QUIZ — 33 / 66 split with embedded globe
+       ══════════════════════════════════════════════════════ */
+
+    .quiz-layout-inner {
+      display: none;
+      width: 100%;
+    }
+
+    #section-quiz.quiz-active .quiz-layout-inner {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      min-height: 100vh;
+    }
+
+    #section-quiz.quiz-active {
+      padding: 0;
+    }
+
+    #section-quiz.quiz-active .map-next-cue {
+      padding: 24px 32px 0;
+    }
+
+    /* Hide the pre-quiz intro card once quiz is active */
+    #section-quiz.quiz-active #gameSection {
+      display: none;
+    }
+
+    .quiz-left-pane {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(24px, 4vw, 48px) clamp(16px, 3vw, 36px);
+      overflow-y: auto;
+    }
+
+    .quiz-right-pane {
+      position: relative;
+      background: #000;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    body.quiz-mode-active #mapWrap {
+      position: absolute;
+      inset: 0;
+    }
+
+    .quiz-globe-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 16px;
+      background: rgba(7, 16, 24, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .quiz-layer-label {
+      color: rgba(247, 244, 236, 0.6);
+      font-size: 0.72rem;
+      font-weight: 760;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .quiz-layer-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .quiz-layer-btn {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(247, 244, 236, 0.82);
+      padding: 6px 11px;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 150ms ease, border-color 150ms ease;
+    }
+
+    .quiz-layer-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: color-mix(in srgb, var(--layer-accent) 50%, transparent);
+    }
+
+    .quiz-layer-btn[aria-pressed="true"] {
+      background: var(--dark);
+      border-color: var(--layer-accent);
+      color: #f7f4ec;
+      box-shadow: inset 0 2px 0 var(--layer-accent);
+    }
+
+    body.quiz-mode-active .globe-entry-overlay {
+      display: none;
+    }
+
+    body.quiz-mode-active .map-readout {
+      opacity: 1 !important;
+      pointer-events: auto;
+    }
+
+    body.globe-focus-active:not(.quiz-mode-active) {
+      overflow: hidden;
+    }
+
+    @media (max-width: 780px) {
+      #section-quiz.quiz-active .quiz-layout-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .quiz-right-pane {
+        min-height: 55vh;
+        height: 55vh;
+        order: -1;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════
+       SCROLLYTELLING LAYOUT — 33 / 66 split
+       ══════════════════════════════════════════════════════ */
+
+    .scrollytelling-layout {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      align-items: start;
+      background: #020408;
+    }
+
+    .story-left {
+      position: relative;
+      z-index: 2;
+      background: #0b1824;
+      color: #f7f4ec;
+    }
+
+    .story-right {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Globe panel fills the full sticky column */
+    .story-right .viz-panel {
+      height: 100vh !important;
+      min-height: 0 !important;
+    }
+
+    /* ── Story sections ── */
+    .story-section {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(40px, 6vh, 72px) clamp(28px, 4vw, 52px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      opacity: 0;
+      transform: translateY(32px);
+      transition:
+        opacity 540ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 540ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Tall sections (timeline, quiz, takeaway) – no forced min-height */
+    .story-section--tall {
+      min-height: auto;
+      padding-top: clamp(48px, 8vh, 96px);
+      padding-bottom: clamp(48px, 8vh, 96px);
+    }
+
+    .story-section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .story-section.is-active {
+      background: rgba(232, 160, 32, 0.035);
+    }
+
+    /* ── Typography inside story sections ── */
+    .story-kicker {
+      margin: 0 0 10px;
+      color: var(--layer-accent);
+      font-size: 0.74rem;
+      font-weight: 820;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .story-section > h2 {
+      margin: 0 0 14px;
+      font-size: clamp(1.55rem, 2.4vw, 2.2rem);
+      line-height: 1.08;
+      font-weight: 830;
+      text-wrap: balance;
+      color: #ffffff;
+    }
+
+    .story-section > p {
+      margin: 0 0 12px;
+      color: rgba(247, 244, 236, 0.76);
+      font-size: clamp(0.94rem, 1.1vw, 1.06rem);
+      line-height: 1.58;
+    }
+
+    .story-section > p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Intro section overrides – keep article-intro-body style but in dark theme */
+    .story-section .article-kicker {
+      color: var(--layer-accent);
+      margin-bottom: 10px;
+    }
+
+    .story-section .article-intro-body {
+      color: rgba(247, 244, 236, 0.76);
+      font-size: clamp(1rem, 1.3vw, 1.15rem);
+      max-width: 100%;
+    }
+
+    .story-section .article-data-note {
+      color: rgba(247, 244, 236, 0.5);
+      font-size: 0.88rem;
+      max-width: 100%;
+    }
+
+    .story-section .intro-transition {
+      color: rgba(247, 244, 236, 0.55);
+      font-size: 0.96rem;
+      margin-top: 14px;
+    }
+
+    /* Intro h2 needs proper dark-theme color */
+    .story-section #mapIntroTitle {
+      color: #ffffff;
+    }
+
+    /* Facts inside story section */
+    .story-section .facts {
+      grid-template-columns: repeat(2, 1fr);
+      margin-top: 20px;
+    }
+
+    .story-section .fact {
+      border-top-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .story-section .fact strong {
+      color: #e8a020;
+      font-size: clamp(1.8rem, 3vw, 3rem);
+    }
+
+    .story-section .fact span {
+      color: rgba(247, 244, 236, 0.58);
+    }
+
+    .story-section .facts-strip-heading h3 {
+      color: #ffffff;
+      font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+    }
+
+    .story-section .facts-strip-heading p {
+      color: rgba(247, 244, 236, 0.6);
+    }
+
+    /* ── Timeline inside scrollytelling ── */
+    .scrollytelling-layout .story-section.timeline-section {
+      background: linear-gradient(180deg, #0b1824 0%, #0d1e2e 100%);
+      border-top: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Override the static-position viz-footer reset to work inside story section */
+    .scrollytelling-layout .story-section .viz-footer {
+      position: static;
+      transform: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: transparent;
+      border: none;
+      padding: 0;
+      box-shadow: none;
+    }
+
+    /* Override timeline-section colors for dark bg */
+    .scrollytelling-layout .timeline-section .timeline-kicker {
+      color: #e8a020;
+    }
+
+    .scrollytelling-layout .timeline-section h2 {
+      color: #ffffff;
+    }
+
+    .scrollytelling-layout .timeline-rule-card {
+      border-left-color: #e8a020;
+      color: rgba(247, 244, 236, 0.7);
+    }
+
+    .scrollytelling-layout .timeline-rule-card strong {
+      color: #ffffff;
+    }
+
+    .scrollytelling-layout .timeline-section .timeline-story p {
+      color: rgba(247, 244, 236, 0.7);
+    }
+
+    .scrollytelling-layout .timeline-legend span {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: rgba(247, 244, 236, 0.8);
+    }
+
+    /* Fix two-column layouts that are too cramped inside the narrow 33% story column */
+    .scrollytelling-layout .timeline-section-header,
+    .scrollytelling-layout .timeline-story {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+
+    .scrollytelling-layout .timeline-rule-card {
+      min-width: 0;
+    }
+
+    .scrollytelling-layout .timeline-legend {
+      justify-content: flex-start;
+    }
+
+    /* Cap vw-based h2 font size — 3.3vw is ~50px on 1512px screens, too large for a 500px column */
+    .scrollytelling-layout .timeline-section h2 {
+      font-size: clamp(1.35rem, 2vw, 1.85rem);
+    }
+
+    /* ══════════════════════════════════════════════════════
+       STANDALONE SECTIONS — full-width, no globe (quiz & takeaway)
+       ══════════════════════════════════════════════════════ */
+
+    .standalone-section {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(60px, 8vh, 100px) clamp(40px, 8vw, 120px);
+      color: #f7f4ec;
+      opacity: 0;
+      transform: translateY(32px);
+      transition:
+        opacity 540ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 540ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .standalone-section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #section-quiz {
+      background: linear-gradient(180deg, #0d1e2e 0%, #071018 100%);
+    }
+
+    #section-quiz .map-next-cue {
+      color: #e8a020;
+      opacity: 1;
+      transform: none;
+      margin-bottom: 24px;
+    }
+
+    #section-takeaway {
+      background: #071018;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .standalone-section {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════
+       SECTION SCROLL CUE — "Scroll to explore" label + chevron
+       ══════════════════════════════════════════════════════ */
+
+    @keyframes scrollCueBounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.45; }
+      50%       { transform: translateX(-50%) translateY(7px); opacity: 0.85; }
+    }
+
+    .section-scroll-cue {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: rgba(247, 244, 236, 0.32);
+      font-size: 0.52rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+      animation: scrollCueBounce 2s ease-in-out infinite;
+    }
+
+    .section-scroll-cue .cue-chevron {
+      width: 8px;
+      height: 8px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      flex-shrink: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .section-scroll-cue { animation: none; opacity: 0.45; }
+    }
+
+    /* ══════════════════════════════════════════════════════
+       LAYER COLOR INTENSITY BAR
+       ══════════════════════════════════════════════════════ */
+
+    .layer-colorbar {
+      margin-top: 14px;
+    }
+
+    .colorbar-caption {
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: rgba(247, 244, 236, 0.45);
+      letter-spacing: 0.03em;
+      margin-bottom: 5px;
+    }
+
+    .colorbar-track {
+      height: 8px;
+      border-radius: 999px;
+      width: 100%;
+    }
+
+    .colorbar-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 0.62rem;
+      color: rgba(247, 244, 236, 0.45);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    /* Hide globe entry overlay – globe is always visible in scrollytelling mode */
+    .scrollytelling-layout .globe-entry-overlay {
+      display: none;
+    }
+
+    /* ── Responsive: stack on mobile ── */
+    @media (max-width: 980px) {
+      .scrollytelling-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .story-right {
+        order: -1;
+        position: relative;
+        height: 54vh;
+        min-height: 360px;
+      }
+
+      .story-right .viz-panel {
+        height: 100% !important;
+      }
+
+      .story-left {
+        order: 1;
+      }
+
+      .story-section {
+        height: auto;
+        min-height: auto;
+        overflow: visible;
+        padding: 36px 20px 80px;
+      }
+
+      .story-section .section-nav {
+        position: static;
+        margin-top: 24px;
+      }
+
+      .story-section .facts {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .story-section .facts {
+        grid-template-columns: 1fr;
+      }
+
+      .story-section > h2 {
+        font-size: 1.45rem;
+      }
+    }
+
+    /* Reduced motion: skip entrance animations */
+    @media (prefers-reduced-motion: reduce) {
+      .story-section {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* ── Overlay toggles — inside right control dock ── */
+    /* ── Globe geographic labels ── */
+    #globe-labels {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      overflow: hidden;
+    }
+
+    .globe-label {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      background: rgba(14, 22, 30, 0.94);
+      color: #f7f4ec;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 8px;
+      padding: 7px 12px 7px 9px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 6px 20px rgba(2, 4, 8, 0.5);
+      transition: opacity 400ms ease;
+      pointer-events: auto;
+      cursor: pointer;
+      max-width: 220px;
+    }
+
+    /* Directional arrow using ::after pseudo-element */
+    .globe-label::after {
+      content: "";
+      position: absolute;
+      width: 0;
+      height: 0;
+      border: 6px solid transparent;
+    }
+
+    .globe-label[data-side="bottom"]::after {
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-top-color: rgba(14, 22, 30, 0.94);
+      border-bottom: none;
+      margin-top: -1px;
+    }
+
+    .globe-label[data-side="top"]::after {
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-bottom-color: rgba(14, 22, 30, 0.94);
+      border-top: none;
+      margin-bottom: -1px;
+    }
+
+    .globe-label[data-side="right"]::after {
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-left-color: rgba(14, 22, 30, 0.94);
+      border-right: none;
+      margin-left: -1px;
+    }
+
+    .globe-label[data-side="left"]::after {
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-right-color: rgba(14, 22, 30, 0.94);
+      border-left: none;
+      margin-right: -1px;
+    }
+
+    .globe-label-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 3px;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.15);
+    }
+
+    .globe-label-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .globe-label-title {
+      font-size: 0.74rem;
+      font-weight: 720;
+      letter-spacing: 0.03em;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .globe-label-desc {
+      font-size: 0.66rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      opacity: 0.65;
+      margin: 0;
+      line-height: 1.35;
+    }
+
+    .globe-label-detail {
+      display: none;
+      font-size: 0.67rem;
+      font-weight: 400;
+      opacity: 0.82;
+      margin-top: 5px;
+      line-height: 1.45;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 5px;
+    }
+
+    .globe-label--expanded .globe-label-detail {
+      display: block;
+    }
+
+    .globe-label-click-hint {
+      display: inline-block;
+      font-size: 0.63rem;
+      font-weight: 740;
+      letter-spacing: 0.01em;
+      margin-top: 5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(232, 160, 32, 0.2);
+      border: 1px solid rgba(232, 160, 32, 0.5);
+      color: #f0c060;
+      opacity: 1;
+    }
+
+    .globe-label--expanded .globe-label-click-hint {
+      background: rgba(247, 244, 236, 0.12);
+      border-color: rgba(247, 244, 236, 0.3);
+      color: rgba(247, 244, 236, 0.7);
+    }
+
+    /* ── Drag hint in content section ── */
+    .globe-interact-note {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.70rem;
+      color: rgba(247, 244, 236, 0.45);
+      margin-top: 14px;
+      margin-bottom: 2px;
+      font-style: italic;
+      letter-spacing: 0.01em;
+    }
+
+    .globe-interact-note svg {
+      flex-shrink: 0;
+      opacity: 0.55;
+    }
+
+    /* ── Globe drag/explore hint ── */
+    .globe-drag-hint {
+      position: absolute;
+      bottom: 60px;
+      left: 14px;
+      z-index: 7;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(14, 22, 30, 0.82);
+      color: rgba(247, 244, 236, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      padding: 5px 11px 5px 8px;
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: none;
+      transition: opacity 600ms ease;
+    }
+
+    .globe-drag-hint svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+
+    .globe-drag-hint.is-hidden {
+      opacity: 0;
+    }
+
+    /* ── Click-to-learn hint ── */
+    .globe-tip-hint {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 7;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(14, 22, 30, 0.82);
+      color: rgba(247, 244, 236, 0.70);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      padding: 5px 11px 5px 8px;
+      font-size: 0.64rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: none;
+      transition: opacity 600ms ease;
+    }
+
+    .globe-tip-hint svg {
+      width: 12px;
+      height: 12px;
+      opacity: 0.65;
+      flex-shrink: 0;
+    }
+
+    .globe-tip-hint.is-hidden {
+      opacity: 0;
+    }
+
+    /* ── Layer note scroll tooltip ── */
+    .layer-note-tip {
+      position: absolute;
+      bottom: 110px;
+      left: 14px;
+      z-index: 6;
+      max-width: 220px;
+      background: rgba(23, 32, 39, 0.82);
+      color: rgba(247, 244, 236, 0.80);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.73rem;
+      line-height: 1.4;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 500ms ease;
+    }
+
+    .layer-note-tip.is-visible {
+      opacity: 1;
+    }
+
+    /* ── Timeline standalone section (below globe) ── */
+    /* ══════════════════════════════════════════════════════
+       TIMELINE STANDALONE — redesigned editorial section
+       ══════════════════════════════════════════════════════ */
+
+    .timeline-standalone {
+      background:
+        radial-gradient(ellipse 70% 50% at 95% 10%, rgba(193, 52, 30, 0.06), transparent),
+        radial-gradient(ellipse 60% 40% at 5% 90%, rgba(29, 111, 163, 0.05), transparent),
+        linear-gradient(180deg, #f0ebe0 0%, var(--page) 30%, #f7f3ea 100%);
+      color: var(--ink);
+      padding: clamp(56px, 9vh, 100px) clamp(24px, 6vw, 80px) clamp(80px, 12vh, 120px);
+      width: 100%;
+      box-sizing: border-box;
+      border-top: 1px solid rgba(23, 32, 39, 0.1);
+      border-bottom: 1px solid rgba(23, 32, 39, 0.08);
+    }
+
+    .timeline-standalone .timeline-section-inner {
+      max-width: 1060px;
+      margin: 0 auto;
+    }
+
+    /* ── Section title block ── */
+    .timeline-section-title {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 28px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid rgba(23, 32, 39, 0.12);
+      overflow: hidden;
+    }
+
+    .timeline-section-number-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .timeline-section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(23, 32, 39, 0.22);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .timeline-section-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .timeline-section-title-text {
+      display: grid;
+      gap: 4px;
+    }
+
+    .timeline-section-heading {
+      margin: 0;
+      font-size: clamp(1.8rem, 3.8vw, 3.2rem);
+      font-weight: 860;
+      line-height: 1.0;
+      color: var(--ink);
+      text-wrap: balance;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── Section header: kicker + h2 + rule card ── */
+    .timeline-standalone .timeline-section-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px 32px;
+      align-items: start;
+      margin-bottom: 28px;
+    }
+
+    .timeline-standalone .timeline-kicker {
+      margin: 0 0 7px;
+      color: var(--gold);
+      font-size: 0.73rem;
+      font-weight: 820;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .timeline-standalone #timelineSectionTitle {
+      margin: 0;
+      font-size: clamp(1.55rem, 2.8vw, 2.2rem);
+      font-weight: 830;
+      line-height: 1.08;
+      color: var(--ink);
+    }
+
+    .timeline-standalone .timeline-rule-card {
+      min-width: 200px;
+      max-width: 260px;
+      background: rgba(138, 106, 36, 0.07);
+      border: 1px solid rgba(138, 106, 36, 0.22);
+      border-left: 3px solid var(--gold);
+      border-radius: 8px;
+      padding: 13px 16px;
+      color: #4f5d65;
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+
+    .timeline-standalone .timeline-rule-card strong {
+      display: block;
+      color: var(--ink);
+      font-size: 1.05rem;
+      line-height: 1;
+      font-weight: 860;
+      margin-bottom: 5px;
+      white-space: nowrap;
+    }
+
+    .timeline-standalone .timeline-rule-card span {
+      display: block;
+    }
+
+    /* ── Stat row ── */
+    .timeline-stat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 0 0 22px;
+    }
+
+    .timeline-stat-card {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(23, 32, 39, 0.09);
+      border-top: 3px solid #c1341e;
+      border-radius: 0 0 8px 8px;
+      padding: 18px 16px 16px;
+      box-shadow: 0 2px 12px rgba(23, 32, 39, 0.06);
+      transition: box-shadow 200ms ease, transform 200ms ease;
+    }
+
+    .timeline-stat-card:hover {
+      box-shadow: 0 6px 22px rgba(23, 32, 39, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .timeline-stat-card--neutral {
+      border-top-color: #9ba6ab;
+    }
+
+    .timeline-stat-card--nina {
+      border-top-color: #1d6fa3;
+    }
+
+    .timeline-stat-card strong {
+      display: block;
+      font-size: clamp(2rem, 3.4vw, 3rem);
+      font-weight: 870;
+      line-height: 1;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .timeline-stat-card span {
+      display: block;
+      margin-top: 7px;
+      font-size: 0.76rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Context text ── */
+    .timeline-context-text {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.65;
+      max-width: 780px;
+    }
+
+    /* ── Viz footer inside standalone ── */
+    .timeline-standalone .viz-footer {
+      position: static;
+      transform: none;
+      z-index: auto;
+      left: auto;
+      right: auto;
+      bottom: auto;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(23, 32, 39, 0.09);
+    }
+
+    @media (max-width: 700px) {
+      .timeline-stat-row {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-standalone .timeline-section-header {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-standalone .timeline-rule-card {
+        max-width: none;
+      }
+
+    }
+
+    /* ── Scroll cue — flows inside inner div, directly below chart ── */
+    .timeline-standalone .section-scroll-cue {
+      position: static;
+      transform: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-top: 24px;
+      padding-bottom: 6px;
+      color: rgba(23, 32, 39, 0.32);
+      font-size: 0.52rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      gap: 4px;
+      animation: timelineScrollCueBounce 2s ease-in-out infinite;
+    }
+
+    .timeline-standalone .section-scroll-cue .cue-chevron {
+      width: 8px;
+      height: 8px;
+      border-right: 1.5px solid rgba(23, 32, 39, 0.35);
+      border-bottom: 1.5px solid rgba(23, 32, 39, 0.35);
+    }
+
+    @keyframes timelineScrollCueBounce {
+      0%, 100% { opacity: 0.55; transform: translateY(0); }
+      50%       { opacity: 0.9;  transform: translateY(7px); }
+    }
+  </style>
+</head>
+<body>
+  <section class="site-hero" aria-labelledby="heroTitle">
+    <div class="hero-content">
+      <p class="hero-kicker">Pacific climate system</p>
+      <h1 class="hero-title" id="heroTitle">El Nino Rewires the Pacific</h1>
+      <p class="hero-hook">Every few years, the Pacific Ocean rewires the world's weather.</p>
+      <p class="hero-copy">Drought in Australia. Floods in Peru. California can dry out, or drown. El Nino shifts rainfall, clouds, and reflected sunlight across the Pacific.</p>
+      <p class="hero-question">Can you predict where those shifts happen?</p>
+    </div>
+    <div class="hero-scroll-cue">Scroll to explore<span class="hero-chevron" aria-hidden="true"></span></div>
+  </section>
+
+  <div class="scrollytelling-layout">
+
+    <!-- ══ LEFT 33% — story sections ══════════════════════════════ -->
+    <div class="story-left">
+
+      <!-- 1. Intro -->
+      <section class="story-section" id="section-intro"
+        data-camera-lng="-168" data-camera-lat="3" data-camera-zoom="1.8"
+        aria-labelledby="mapIntroTitle">
+        <p class="article-kicker">The Pacific pattern</p>
+        <h2 id="mapIntroTitle">El Nino starts in the ocean, but it does not stay there.</h2>
+        <p class="article-intro-body">The map is a composite showing the typical Pacific-wide pattern across 1950–2014. Start with the El Nino Fingerprint, then peel apart the layers to see how ocean warming lines up with rainfall, clouds, and reflected sunlight.</p>
+        <p class="article-data-note">Dataset: CESM2 historical climate model output from 1950–2014, comparing El Nino-like months against neutral months.</p>
+        <p class="intro-transition">Scroll down to step through each layer — the globe updates automatically.</p>
+        <p class="section-scroll-cue" aria-hidden="true">
+          <span class="cue-chevron"></span>
+          Scroll to continue
+        </p>
+      </section>
+
+      <!-- 2. Facts -->
+      <section class="story-section" id="section-facts"
+        data-camera-lng="-103" data-camera-lat="1" data-camera-zoom="2.6"
+        aria-label="Data summary">
+        <div class="facts-strip-heading">
+          <h3>The comparison behind the map</h3>
+          <p>Each layer compares El Nino-like months against neutral months in CESM2 historical data.</p>
+        </div>
+        <div class="facts" id="facts"></div>
+        <p class="section-scroll-cue" aria-hidden="true">
+          <span class="cue-chevron"></span>
+          Scroll to continue
+        </p>
+      </section>
+
+      <!-- 3. El Nino Fingerprint (combined) -->
+      <section class="story-section" id="section-combined"
+        data-layer="combined"
+        data-camera-lng="180" data-camera-lat="2" data-camera-zoom="1.9"
+        aria-label="El Nino Fingerprint layer">
+        <p class="story-kicker">Fingerprint</p>
+        <h2>The whole pattern appears first.</h2>
+        <p>The fingerprint combines ocean warming, rainfall, clouds, and reflected sunlight into one normalized index. Strong positive areas show where several El Nino signals line up across the Pacific basin.</p>
+        <p>The eastern and central Pacific light up in unison — a stark contrast to the weaker or opposite signal in the west.</p>
+        <p class="globe-interact-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 2a2 2 0 0 1 2 2v5.5l1.5-1a1.5 1.5 0 0 1 2 2.2L14 14.5A6 6 0 0 1 8 20H6a4 4 0 0 1-4-4v-3a1.5 1.5 0 0 1 3 0V11l3.5-4.5A2 2 0 0 1 12 4V2z"/></svg>
+          You can drag and scroll the globe to explore freely.
+        </p>
+        <div class="layer-colorbar" role="img" aria-label="Color scale: purple/blue = below-average fingerprint, orange/red = above-average fingerprint">
+          <p class="colorbar-caption">Composite El Niño signal — negative (opposite pattern) to positive (strong alignment)</p>
+          <div class="colorbar-track" style="background: linear-gradient(90deg, rgb(140,0,210) 0%, rgb(60,80,230) 28%, rgb(20,30,60) 47%, rgb(20,30,60) 53%, rgb(240,80,20) 72%, rgb(195,0,55) 100%)"></div>
+          <div class="colorbar-labels">
+            <span>−1 index</span>
+            <span>0</span>
+            <span>+1 index</span>
+          </div>
+        </div>
+        <p class="section-scroll-cue" aria-hidden="true">
+          <span class="cue-chevron"></span>
+          Scroll to continue
+        </p>
+      </section>
+
+      <!-- 4. SST Warming -->
+      <section class="story-section" id="section-sst"
+        data-layer="sst"
+        data-camera-lng="-170" data-camera-lat="-2" data-camera-zoom="1.9"
+        aria-label="SST Warming layer">
+        <p class="story-kicker">SST Warming</p>
+        <h2>The ocean starts the chain.</h2>
+        <p>Sea-surface temperature rises across the tropical Pacific. This warm water is the trigger that reorganizes the atmosphere above it.</p>
+        <p>The Niño 3.4 region (5°N–5°S, 170°W–120°W) is the key monitoring zone — scientists declare an El Niño event when warming there exceeds +0.5 °C for several consecutive months.</p>
+        <p class="globe-interact-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 2a2 2 0 0 1 2 2v5.5l1.5-1a1.5 1.5 0 0 1 2 2.2L14 14.5A6 6 0 0 1 8 20H6a4 4 0 0 1-4-4v-3a1.5 1.5 0 0 1 3 0V11l3.5-4.5A2 2 0 0 1 12 4V2z"/></svg>
+          You can drag and scroll the globe to explore freely.
+        </p>
+        <div class="layer-colorbar" role="img" aria-label="Color scale: blue = cooler ocean, red = warmer ocean">
+          <p class="colorbar-caption">Sea-surface temperature anomaly — cooler than normal to warmer than normal</p>
+          <div class="colorbar-track" style="background: linear-gradient(90deg, rgb(0,40,130) 0%, rgb(30,100,200) 28%, rgb(12,22,50) 47%, rgb(12,22,50) 53%, rgb(230,60,20) 72%, rgb(165,0,0) 100%)"></div>
+          <div class="colorbar-labels">
+            <span>−2 °C</span>
+            <span>0</span>
+            <span>+2 °C</span>
+          </div>
+        </div>
+        <p class="section-scroll-cue" aria-hidden="true">
+          <span class="cue-chevron"></span>
+          Scroll to continue
+        </p>
+      </section>
+
+      <!-- 5. Rainfall Shift -->
+      <section class="story-section" id="section-precip"
+        data-layer="precip"
+        data-camera-lng="170" data-camera-lat="2" data-camera-zoom="1.9"
+        aria-label="Rainfall Shift layer">
+        <p class="story-kicker">Rainfall Shift</p>
+        <h2>Rain does not just increase everywhere.</h2>
+        <p>El Nino shifts rainfall eastward across the Pacific. Some regions become wetter while others dry out — which is why the same event can mean floods in one place and drought in another.</p>
+        <p>Red areas received more rain during El Nino-like months; blue areas dried out.</p>
+        <p class="globe-interact-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 2a2 2 0 0 1 2 2v5.5l1.5-1a1.5 1.5 0 0 1 2 2.2L14 14.5A6 6 0 0 1 8 20H6a4 4 0 0 1-4-4v-3a1.5 1.5 0 0 1 3 0V11l3.5-4.5A2 2 0 0 1 12 4V2z"/></svg>
+          You can drag and scroll the globe to explore freely.
+        </p>
+        <div class="layer-colorbar" role="img" aria-label="Color scale: brown = drier, green = wetter">
+          <p class="colorbar-caption">Rainfall anomaly — drier than normal to wetter than normal</p>
+          <div class="colorbar-track" style="background: linear-gradient(90deg, rgb(140,60,10) 0%, rgb(200,120,30) 28%, rgb(12,20,35) 47%, rgb(12,20,35) 53%, rgb(0,160,90) 72%, rgb(0,85,45) 100%)"></div>
+          <div class="colorbar-labels">
+            <span>−4 mm/day</span>
+            <span>0</span>
+            <span>+4 mm/day</span>
+          </div>
+        </div>
+        <p class="section-scroll-cue" aria-hidden="true">
+          <span class="cue-chevron"></span>
+          Scroll to continue
+        </p>
+      </section>
+
+      <!-- 6. Cloud Cover -->
+      <section class="story-section" id="section-cloud"
+        data-layer="cloud"
+        data-camera-lng="163" data-camera-lat="4" data-camera-zoom="1.9"
+        aria-label="Cloud Cover layer">
+        <p class="story-kicker">Cloud Cover</p>
+        <h2>Storm clouds follow the warm water.</h2>
+        <p>Cloud cover changes as tropical convection moves. The atmosphere responds to the ocean pattern instead of staying fixed in place.</p>
+        <p>Positive values (cloudier) in the central Pacific and negative values (clearer) near Indonesia show how dramatically the convective zone migrates.</p>
+        <p class="globe-interact-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 2a2 2 0 0 1 2 2v5.5l1.5-1a1.5 1.5 0 0 1 2 2.2L14 14.5A6 6 0 0 1 8 20H6a4 4 0 0 1-4-4v-3a1.5 1.5 0 0 1 3 0V11l3.5-4.5A2 2 0 0 1 12 4V2z"/></svg>
+          You can drag and scroll the globe to explore freely.
+        </p>
+        <div class="layer-colorbar" role="img" aria-label="Color scale: brown/gold = clearer skies, purple = cloudier">
+          <p class="colorbar-caption">Cloud cover anomaly — clearer than normal to cloudier than normal</p>
+          <div class="colorbar-track" style="background: linear-gradient(90deg, rgb(130,70,0) 0%, rgb(190,130,20) 28%, rgb(12,20,35) 47%, rgb(12,20,35) 53%, rgb(120,50,210) 72%, rgb(65,0,155) 100%)"></div>
+          <div class="colorbar-labels">
+            <span>−14 %pts</span>
+            <span>0</span>
+            <span>+14 %pts</span>
+          </div>
+        </div>
+        <p class="section-scroll-cue" aria-hidden="true">
+          <span class="cue-chevron"></span>
+          Scroll to continue
+        </p>
+      </section>
+
+      <!-- 7. Radiation (rsut) -->
+      <section class="story-section" id="section-rsut"
+        data-layer="rsut"
+        data-camera-lng="175" data-camera-lat="2" data-camera-zoom="1.9"
+        aria-label="Outgoing Radiation layer">
+        <p class="story-kicker">Radiation</p>
+        <h2>Even reflected sunlight changes.</h2>
+        <p>Clouds affect how much shortwave radiation leaves the top of the atmosphere. El Nino changes the Pacific energy balance, not only ocean temperature.</p>
+        <p>Where clouds increase, more sunlight bounces back to space. The pattern closely mirrors cloud cover, confirming the tight coupling between clouds and reflected energy.</p>
+        <p class="globe-interact-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><path d="M12 2a2 2 0 0 1 2 2v5.5l1.5-1a1.5 1.5 0 0 1 2 2.2L14 14.5A6 6 0 0 1 8 20H6a4 4 0 0 1-4-4v-3a1.5 1.5 0 0 1 3 0V11l3.5-4.5A2 2 0 0 1 12 4V2z"/></svg>
+          You can drag and scroll the globe to explore freely.
+        </p>
+        <div class="layer-colorbar" role="img" aria-label="Color scale: green = less reflected radiation, magenta = more reflected radiation">
+          <p class="colorbar-caption">Reflected solar radiation anomaly — less reflected (more absorbed) to more reflected</p>
+          <div class="colorbar-track" style="background: linear-gradient(90deg, rgb(70,120,0) 0%, rgb(130,190,10) 28%, rgb(12,20,35) 47%, rgb(12,20,35) 53%, rgb(210,20,170) 72%, rgb(125,0,115) 100%)"></div>
+          <div class="colorbar-labels">
+            <span>−24 W/m²</span>
+            <span>0</span>
+            <span>+24 W/m²</span>
+          </div>
+        </div>
+        <p class="section-scroll-cue" aria-hidden="true">
+          <span class="cue-chevron"></span>
+          Scroll to continue
+        </p>
+      </section>
+
+    </div><!-- /.story-left -->
+
+    <!-- ══ RIGHT 66% — sticky globe ═══════════════════════════════ -->
+    <div class="story-right" id="storyRight">
+      <section class="viz-panel">
+        <div class="map-wrap" id="mapWrap">
+          <div id="map" aria-label="Interactive Pacific data map"></div>
+          <div class="map-loading-overlay" id="mapLoadingOverlay" aria-live="polite" aria-hidden="true">
+            <div class="map-loading-panel">
+              <strong id="mapLoadingTitle">Building map layer</strong>
+              <span id="mapLoadingText">Preparing the next El Nino signal for the globe.</span>
+            </div>
+          </div>
+          <div class="globe-entry-overlay" id="globeEntryOverlay">
+            <div class="globe-entry-panel">
+              <strong>Enter the globe</strong>
+              <span>Focus the map to drag, rotate, and zoom the Pacific without the page moving.</span>
+              <button id="globeEnterBtn" type="button">Enter globe</button>
+            </div>
+          </div>
+          <button class="globe-exit-btn" id="globeExitBtn" type="button">Exit</button>
+          <section class="topbar" aria-label="Current map view">
+            <p class="caption-kicker" id="captionKicker">Fingerprint</p>
+            <h3 class="caption-heading" id="captionHeading">The whole pattern appears first.</h3>
+            <p class="caption-body" id="captionBody">Start here to see the places where several El Nino changes show up together.</p>
+            <div class="caption-current">
+              <h2 id="layerTitle">Loading data...</h2>
+              <p id="layerDescription">Reading the interactive CMIP6 dataset.</p>
+            </div>
+          </section>
+          <div class="map-readout">
+            <strong id="hoverTitle">Hover the Pacific map</strong>
+            <span id="hoverText">Hover the colored ocean map for values.</span>
+          </div>
+          <div id="layer-note-tooltip" class="layer-note-tip" aria-live="polite"></div>
+          <div id="globe-labels" aria-hidden="true"></div>
+          <div class="globe-drag-hint" id="globeDragHint" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a2 2 0 0 1 2 2v5.5l1.5-1a1.5 1.5 0 0 1 2 2.2L14 14.5A6 6 0 0 1 8 20H6a4 4 0 0 1-4-4v-3a1.5 1.5 0 0 1 3 0V11l3.5-4.5A2 2 0 0 1 12 4V2z"/>
+            </svg>
+            Drag to explore
+          </div>
+          <div class="globe-tip-hint" id="globeTipHint" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Click labels to learn more
+          </div>
+        </div>
+      </section>
+    </div><!-- /.story-right -->
+
+  </div><!-- /.scrollytelling-layout -->
+
+  <!-- 8b. How we define El Niño-like months — standalone full-width section -->
+  <section class="standalone-section timeline-standalone" id="section-timeline" aria-labelledby="timelineSectionTitle">
+    <div class="timeline-section-inner">
+
+      <!-- Section title block -->
+      <div class="timeline-section-title">
+        <div class="timeline-section-number-row">
+          <span class="timeline-section-number" aria-hidden="true">03</span>
+          <span class="timeline-section-label">The Methodology</span>
+        </div>
+        <div class="timeline-section-title-text">
+          <h3 class="timeline-section-heading">Classifying 65 years of Pacific variability</h3>
+        </div>
+      </div>
+
+      <div class="timeline-section-header">
+        <div>
+          <p class="timeline-kicker">Behind the comparison</p>
+          <h2 id="timelineSectionTitle">How we define El Nino-like months</h2>
+        </div>
+        <p class="timeline-rule-card"><strong>+0.5 °C threshold</strong><span>Months above this line become the El Nino-like group used in the map.</span></p>
+      </div>
+      <div class="timeline-stat-row" id="timelineStatRow">
+        <div class="timeline-stat-card">
+          <strong id="statElNino">—</strong>
+          <span>El Niño-like months</span>
+        </div>
+        <div class="timeline-stat-card timeline-stat-card--neutral">
+          <strong id="statNeutral">—</strong>
+          <span>Neutral months</span>
+        </div>
+        <div class="timeline-stat-card timeline-stat-card--nina">
+          <strong id="statLaNina">—</strong>
+          <span>La Niña-like months</span>
+        </div>
+      </div>
+      <p class="timeline-context-text">
+        The Niño 3.4 region (5°N–5°S, 170°W–120°W) is the standard benchmark for ENSO.
+        When its monthly sea-surface temperature anomaly stays above +0.5 °C, that month
+        is counted as El Niño-like in this analysis. Months below −0.5 °C are La Niña-like;
+        everything in between is Neutral. The 65-year record below shows how frequently
+        each phase has appeared since 1950.
+      </p>
+      <div class="viz-footer tf-visible">
+        <div class="timeline-story">
+          <p>The map compares two groups of months. This timeline shows how those groups are chosen from the Nino 3.4 sea-surface temperature anomaly record, month by month, from 1950–2014.</p>
+          <div class="timeline-legend" aria-label="Timeline phase legend">
+            <span style="--dot-color: #c1341e">El Nino-like</span>
+            <span style="--dot-color: #9ba6ab">Neutral</span>
+            <span style="--dot-color: #1d6fa3">La Nina-like</span>
+          </div>
+        </div>
+        <div class="timeline-wrap">
+          <svg class="timeline" id="timelineSvg" role="img" aria-label="Nino 3.4 monthly anomaly timeline"></svg>
+          <div class="timeline-tooltip" id="timelineTooltip" role="tooltip"></div>
+        </div>
+      </div>
+      <canvas id="timelineCanvas" hidden aria-hidden="true"></canvas>
+      <div class="section-scroll-cue" aria-hidden="true">Scroll down to explore<span class="cue-chevron"></span></div>
+    </div>
+  </section>
+
+  <!-- 9. Quiz — standalone full-width section, transforms to 33/66 when quiz starts -->
+  <section class="standalone-section" id="section-quiz" aria-label="Quiz and test">
+    <p class="map-next-cue">Next: test your intuition.</p>
+
+    <!-- Pre-quiz intro card — visible until quiz starts, then hidden by CSS -->
+    <section class="game-section" id="gameSection">
+      <div id="gameIntro">
+        <h2 class="game-intro-header">Test Your El Nino Intuition</h2>
+        <p class="game-intro-text">Now that you have seen the Pacific-wide pattern, test whether your intuition matches the science. Each question will ask you to predict one El Nino effect, then compare your guess against the map layers.</p>
+        <button class="btn-start" id="gameStartBtn" disabled>Loading data…</button>
+      </div>
+    </section>
+
+    <!-- 33/66 layout — hidden until quiz starts -->
+    <div class="quiz-layout-inner">
+      <div class="quiz-left-pane">
+        <section class="game-section">
+          <div class="game-body" id="gameBody" style="display:none">
+            <div class="game-header-row">
+              <span class="game-progress-label" id="gameProgress">Question 1 of 6</span>
+              <div class="progress-track"><div class="progress-bar" id="gameProgressBar" style="width:0%"></div></div>
+              <span class="game-score-label" id="gameScoreLabel">Score: 0</span>
+            </div>
+            <div id="gameCard">
+              <p class="game-question" id="gameQuestion"></p>
+              <div class="game-options" id="gameOptions"></div>
+              <div class="game-feedback" id="gameFeedback" style="display:none">
+                <p class="feedback-verdict" id="feedbackVerdict"></p>
+                <p class="feedback-explanation" id="feedbackExplanation"></p>
+                <p class="feedback-map-hint" id="feedbackMapHint"></p>
+                <div class="game-actions">
+                  <button class="btn-view-map" id="gameViewMapBtn">&#x2191; View on map</button>
+                  <button class="btn-next" id="gameNextBtn">Next Question &#x2192;</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="game-results" id="gameResults" style="display:none">
+            <div class="results-inner">
+              <div class="score-ring" id="finalScore"></div>
+              <p id="resultsMessage"></p>
+              <button class="btn-retry" id="gameRetryBtn">Play Again</button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="quiz-right-pane" id="quizRightPane">
+        <!-- #mapWrap is moved here by JS when quiz starts -->
+        <div class="quiz-globe-controls" id="quizGlobeControls">
+          <span class="quiz-layer-label">Explore layers</span>
+          <div class="quiz-layer-buttons">
+            <button type="button" class="quiz-layer-btn" data-layer="combined" aria-pressed="false">Fingerprint</button>
+            <button type="button" class="quiz-layer-btn" data-layer="sst" aria-pressed="false">SST</button>
+            <button type="button" class="quiz-layer-btn" data-layer="precip" aria-pressed="false">Rain</button>
+            <button type="button" class="quiz-layer-btn" data-layer="cloud" aria-pressed="false">Clouds</button>
+            <button type="button" class="quiz-layer-btn" data-layer="rsut" aria-pressed="false">Radiation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section-scroll-cue" aria-hidden="true">Scroll to explore<span class="cue-chevron"></span></div>
+  </section>
+
+  <!-- 10. Takeaway — standalone full-width section, no globe -->
+  <section class="standalone-section" id="section-takeaway" aria-labelledby="takeawayTitle">
+    <section class="takeaway-section">
+      <div>
+        <h2 id="takeawayTitle">What El Nino Actually Teaches Us</h2>
+        <p>El Nino is not one isolated ocean effect. It begins with unusual warming in the tropical Pacific, and that warming lines up with shifts in rainfall, cloud cover, outgoing shortwave radiation, and regional climate patterns.</p>
+        <p>The project succeeds when users can see those variables as one connected Pacific-wide system.</p>
+      </div>
+      <div class="takeaway-stat"><strong>+2 °C</strong><span>Strong El Nino events can exceed about this anomaly in the Nino 3.4 region.</span></div>
+    </section>
+  </section>
+
+  <div class="back-to-quiz-banner" id="backToQuizBanner" aria-hidden="true">
+    <span>Viewing the map</span>
+    <button id="backToQuizBtn" type="button">&#x2193; Back to Quiz</button>
+  </div>
+
+  <script>
+    const QUIZ_QUESTIONS = [
+      {
+        layer: "sst",
+        mapFocus: { center: [-170, -2], zoom: 1.9 },
+        question: "During an El Niño event, which part of the Pacific Ocean heats up the most?",
+        options: [
+          "The western Pacific near the Philippines and Indonesia",
+          "The central and eastern tropical Pacific",
+          "The North Pacific near Alaska and the Aleutian Islands",
+          "The South Pacific near New Zealand"
+        ],
+        correctIndex: 1,
+        explanation: "The central and eastern tropical Pacific is ground zero for El Niño warming. The Niño 3.4 region (5°N–5°S, 170°W–120°W) is the key monitoring zone — when it exceeds +0.5°C above average, scientists declare an El Niño event.",
+        mapHint: "On the map: Switch to SST Warming and look for the warming band across the central and eastern tropical Pacific — the Niño 3.4 region is the red-shaded zone between 5°N and 5°S.",
+        highlight: "nino"
+      },
+      {
+        layer: "precip",
+        mapFocus: { center: [170, 2], zoom: 1.9 },
+        question: "El Niño warms the central Pacific. What does that do to rainfall across the basin?",
+        options: [
+          "Rain increases everywhere equally across the Pacific",
+          "Rain decreases everywhere — El Niño always means drought",
+          "Rain shifts eastward: some places flood while others dry out",
+          "Rainfall patterns do not change — only temperature is affected"
+        ],
+        correctIndex: 2,
+        explanation: "El Niño is infamous for shifting rainfall rather than simply adding or removing it. Heavy convection migrates eastward, bringing floods to Peru and Ecuador while Australia and Indonesia experience severe drought. Same event, opposite effects — depending entirely on where you are.",
+        mapHint: "On the map: Switch to Rainfall Shift. Red areas got wetter, blue areas dried out. Notice how starkly the eastern and western Pacific differ.",
+        highlight: "regions"
+      },
+      {
+        layer: "cloud",
+        mapFocus: { center: [163, 4], zoom: 1.9 },
+        question: "The warm water moves east during El Niño. Where do the tropical storm clouds go?",
+        options: [
+          "Clouds stay locked in place over Indonesia — they ignore ocean temperature",
+          "Cloud cover increases uniformly across the whole Pacific basin",
+          "Clouds disappear entirely over the tropics — warmer water suppresses convection",
+          "Clouds follow the warm water, shifting east and away from the western Pacific"
+        ],
+        correctIndex: 3,
+        explanation: "Tropical convection — the engine behind thunderstorms — is powered by warm sea-surface temperatures. When warm water shifts east during El Niño, the convective zone and its clouds follow. This is why Indonesia dries out while the central Pacific gets soaked.",
+        mapHint: "On the map: Switch to Cloud Cover. The positive (cloudier) signal over the central Pacific and the negative (clearer) signal near Indonesia show the shift clearly.",
+        highlight: "regions"
+      },
+      {
+        layer: "rsut",
+        mapFocus: { center: [175, 2], zoom: 1.9 },
+        question: "El Niño rearranges clouds across the Pacific. What happens to reflected sunlight as a result?",
+        options: [
+          "Where clouds increase, more sunlight is reflected back to space",
+          "Reflected sunlight only changes over land, never over open ocean",
+          "El Niño has no measurable effect on how much sunlight escapes to space",
+          "Sunlight reflection decreases everywhere because warmer ocean absorbs more energy"
+        ],
+        correctIndex: 0,
+        explanation: "Clouds are the Pacific's solar reflectors. Where El Niño builds new cloud towers, more incoming sunlight bounces straight back to space. Where skies clear out, more sunlight reaches and warms the ocean surface. This radiation feedback is part of why El Niño sustains itself for months at a time.",
+        mapHint: "On the map: Switch to Radiation. The pattern closely mirrors Cloud Cover — confirming that clouds and reflected sunlight are tightly coupled.",
+        highlight: "regions"
+      },
+      {
+        layer: "combined",
+        mapFocus: { center: [180, 2], zoom: 1.9 },
+        question: "The El Niño Fingerprint combines SST, rainfall, clouds, and radiation. Where is the signal strongest?",
+        options: [
+          "Evenly distributed across the entire Pacific basin",
+          "Near the coasts of Japan and South Korea in the northwest",
+          "The central and eastern tropical Pacific — all four signals converge there",
+          "In the far southern Pacific near Antarctica and the Drake Passage"
+        ],
+        correctIndex: 2,
+        explanation: "When you overlay all four El Niño signals, the central and eastern tropical Pacific jumps out immediately. This is where ocean warming, extra rainfall, new cloud cover, and changed radiation reinforce each other. The western Pacific shows the opposite — a consistent anti-fingerprint as conditions there flip.",
+        mapHint: "On the map: Switch to El Niño Fingerprint. The deep red zone in the central-eastern tropics is where every signal arrives at once.",
+        highlight: "regions"
+      },
+      {
+        layer: "sst",
+        mapFocus: { center: [-170, -2], zoom: 1.9 },
+        question: "Scientists can forecast El Niño months in advance using models like CESM2. Who benefits most from that lead time?",
+        options: [
+          "Space agencies tracking orbital decay from increased atmospheric drag",
+          "Farmers, flood planners, and fire managers in regions El Niño affects",
+          "Only climate researchers — forecasts are not used outside academia",
+          "Mainly ocean shipping companies routing around warm water"
+        ],
+        correctIndex: 1,
+        explanation: "El Niño is one of the most predictable climate events on Earth — often forecastable 6–9 months ahead. That lead time is lifesaving: farmers in sub-Saharan Africa adjust planting schedules, flood authorities in Ecuador pre-position relief supplies, and fire managers in California extend burn bans. The CESM2 model you explored here feeds directly into those real-world forecasts.",
+        mapHint: "On the map: Switch to SST Warming — the central band of red across the tropical Pacific is the Niño 3.4 region scientists monitor to issue those forecasts.",
+        highlight: "nino"
+      }
+    ];
+
+    const layerConfig = {
+      combined: {
+        label: "El Nino Fingerprint",
+        hint: "Where do multiple El Nino effects line up?",
+        title: "El Nino fingerprint composite index",
+        description: "A normalized composite index: 35% sea-surface temperature anomaly, 25% precipitation change, 20% cloud-cover change, and 20% outgoing shortwave radiation change. It is not a physical variable with one unit; positive values show where multiple El Nino-related effects line up, near-zero values are weak or mixed, and negative values show an opposite or weaker response.",
+        key: "combined",
+        units: "index",
+        range: [-1, 1],
+        note: "Index: higher values mean several El Nino effects line up in the same place.",
+        minLabel: "Opposite or weaker response",
+        maxLabel: "Strong aligned fingerprint",
+        tooltip: "El Nino Fingerprint is a normalized composite index. Positive values mean SST, precipitation, cloud cover, and radiation effects line up strongly; near zero is weak or mixed; negative is opposite or weaker.",
+        cmapCold: [[0, 240, 255, 0.0], [20, 110, 255, 1.0], [160, 0, 220, 1.0]],
+        cmapWarm: [[255, 210, 0, 0.0], [255, 70, 0, 1.0], [200, 0, 60, 1.0]],
+        accentHex: "#e8a020"
+      },
+      sst: {
+        label: "SST Warming",
+        hint: "Where does the ocean heat up most?",
+        title: "Sea-surface temperature anomaly",
+        description: "Average DJF sea-surface temperature anomaly during CESM2 El Nino winters, 1951-2014.",
+        key: "sst_anomaly_c",
+        units: "deg C",
+        range: [-2, 2],
+        note: "Sea-surface temperature anomaly in °C compared with neutral months.",
+        minLabel: "Cooler",
+        maxLabel: "Warmer",
+        tooltip: "Sea surface temperature anomaly. Watch the central and eastern Pacific light up red during El Niño years.",
+        cmapCold: [[200, 235, 255, 0.0], [30, 110, 200, 1.0], [0, 40, 130, 1.0]],
+        cmapWarm: [[255, 220, 180, 0.0], [240, 60, 20, 1.0], [170, 0, 0, 1.0]],
+        accentHex: "#dc2020"
+      },
+      precip: {
+        label: "Rainfall Shift",
+        hint: "Does warmer water mean more rain everywhere?",
+        title: "Precipitation change during El Nino-like months",
+        description: "El Nino-like months minus neutral months, shown as rainfall difference across the Pacific.",
+        key: "precip_mm_day",
+        units: "mm/day",
+        range: [-4, 4],
+        note: "Precipitation change in mm/day compared with neutral months.",
+        minLabel: "Drier",
+        maxLabel: "Wetter",
+        tooltip: "Rain moves eastward, away from Indonesia. This disrupts monsoons across Southeast Asia and Australia.",
+        cmapCold: [[255, 225, 160, 0.0], [210, 130, 30, 1.0], [140, 60, 10, 1.0]],
+        cmapWarm: [[180, 255, 220, 0.0], [0, 170, 100, 1.0], [0, 90, 50, 1.0]],
+        accentHex: "#10a060"
+      },
+      cloud: {
+        label: "Cloud Cover",
+        hint: "Where does convection move?",
+        title: "Cloud cover change during El Nino-like months",
+        description: "El Nino-like months minus neutral months, shown as total cloud-cover percentage-point difference.",
+        key: "cloud_pct_points",
+        units: "percentage points",
+        range: [-14, 14],
+        note: "Cloud-cover change in percentage points compared with neutral months.",
+        minLabel: "Clearer",
+        maxLabel: "Cloudier",
+        tooltip: "Clouds follow the warm water. Positive = cloudier than normal; negative = clearer skies.",
+        cmapCold: [[255, 235, 200, 0.0], [200, 140, 20, 1.0], [130, 70, 0, 1.0]],
+        cmapWarm: [[230, 215, 255, 0.0], [130, 50, 220, 1.0], [70, 0, 160, 1.0]],
+        accentHex: "#8020d0"
+      },
+      rsut: {
+        label: "Radiation",
+        hint: "How do clouds change reflected sunlight?",
+        title: "Outgoing shortwave radiation anomaly",
+        description: "Equatorial outgoing shortwave radiation difference projected by longitude onto the Pacific map.",
+        key: "rsut_w_m2",
+        units: "W/m2",
+        range: [-24, 24],
+        note: "Outgoing shortwave radiation change in W/m²; higher means more reflected sunlight escapes.",
+        minLabel: "Less outgoing SW",
+        maxLabel: "More outgoing SW",
+        tooltip: "Outgoing shortwave radiation shows where reflected sunlight escapes. Fewer clouds usually mean more reflected sunlight leaves the Earth system.",
+        cmapCold: [[225, 255, 200, 0.0], [140, 200, 10, 1.0], [70, 120, 0, 1.0]],
+        cmapWarm: [[255, 200, 245, 0.0], [220, 20, 180, 1.0], [130, 0, 120, 1.0]],
+        accentHex: "#cc14b0"
+      }
+    };
+
+    const state = {
+      data: null,
+      map: null,
+      layer: "combined",
+      selectedTimelineIndex: null,
+      lookups: {},
+      gridInfo: {},
+      builtLayers: new Set(),
+      activeHighlight: null,
+      globeFocus: false,
+      autoSpinFrame: null,
+      lastSpinTime: null,
+      storyCameraUntil: 0,
+      userInteracting: false,
+      calloutTimer: null,
+      globeLabelAnchors: [],
+      quizGlobeActive: false,
+      mapWrapOriginalParent: null,
+      quizAbortController: null
+    };
+
+    const timelineSvg = d3.select("#timelineSvg");
+    const timelineTooltip = d3.select("#timelineTooltip");
+
+    function formatLon(lon) {
+      const r = Math.round(lon);
+      if (r === 0 || r === 180 || r === -180) return `${Math.abs(r)}`;
+      return r > 0 ? `${r}E` : `${-r}W`;
+    }
+
+    function formatLat(lat) {
+      if (Math.round(lat) === 0) return "0";
+      return lat < 0 ? `${Math.abs(Math.round(lat))}S` : `${Math.round(lat)}N`;
+    }
+
+    // --- Canvas raster helpers ---
+
+    function bilinearInterp(lookup, lons, lats, lon, lat, lonStep, latStep) {
+      const lonFrac = (lon - lons[0]) / lonStep;
+      const latFrac = (lat - lats[0]) / latStep;
+      const li0 = Math.max(0, Math.min(lons.length - 2, Math.floor(lonFrac)));
+      const la0 = Math.max(0, Math.min(lats.length - 2, Math.floor(latFrac)));
+      const tx = Math.max(0, Math.min(1, lonFrac - li0));
+      const ty = Math.max(0, Math.min(1, latFrac - la0));
+      const v00 = lookup.get(`${lons[li0]},${lats[la0]}`);
+      const v10 = lookup.get(`${lons[li0 + 1]},${lats[la0]}`);
+      const v01 = lookup.get(`${lons[li0]},${lats[la0 + 1]}`);
+      const v11 = lookup.get(`${lons[li0 + 1]},${lats[la0 + 1]}`);
+      if (v00 != null && v10 != null && v01 != null && v11 != null) {
+        return v00 * (1 - tx) * (1 - ty) + v10 * tx * (1 - ty) + v01 * (1 - tx) * ty + v11 * tx * ty;
+      }
+      // Fall back to nearest neighbor when edge/missing grid points
+      const snapLi = Math.max(0, Math.min(lons.length - 1, Math.round(lonFrac)));
+      const snapLa = Math.max(0, Math.min(lats.length - 1, Math.round(latFrac)));
+      return lookup.get(`${lons[snapLi]},${lats[snapLa]}`);
+    }
+
+    // 3-stop diverging colormap: transparent at neutral → vivid saturated at extremes
+    const CMAP_COLD = [[0, 240, 255, 0.0], [20, 110, 255, 1.0], [160, 0, 220, 1.0]];
+    const CMAP_WARM = [[255, 210, 0, 0.0], [255, 70, 0, 1.0], [200, 0, 60, 1.0]];
+
+    function lerpStop(a, b, t) {
+      return [
+        Math.round(a[0] + (b[0] - a[0]) * t),
+        Math.round(a[1] + (b[1] - a[1]) * t),
+        Math.round(a[2] + (b[2] - a[2]) * t),
+        a[3] + (b[3] - a[3]) * t
+      ];
+    }
+
+    function valueToRGBA(v, rMin, rMax, cmapCold, cmapWarm) {
+      const t = v < 0 ? Math.max(-1, v / Math.abs(rMin)) : Math.min(1, v / rMax);
+      const absT = Math.abs(t);
+      const stops = t < 0 ? cmapCold : cmapWarm;
+      const c = absT <= 0.5
+        ? lerpStop(stops[0], stops[1], absT / 0.5)
+        : lerpStop(stops[1], stops[2], (absT - 0.5) / 0.5);
+      // Power curve steepens the alpha ramp so moderate signals (~0.2) are ~75% opaque
+      // instead of 47%, making the overlay clearly visible over dark satellite imagery
+      return [c[0], c[1], c[2], Math.pow(c[3], 0.22)];
+    }
+
+    function cosEdge(pos, total, fadeW) {
+      const d = Math.min(pos, total - 1 - pos);
+      const t = Math.min(d / fadeW, 1);
+      return (1 - Math.cos(t * Math.PI)) / 2;
+    }
+
+    // canvasLonMin/canvasLonMax define the geographic slice to render (default: full data range).
+    // Uses pad→blur→crop so edges are properly blurred without transparency artifacts.
+    // Wrapping uses full 360° so any sub-range (e.g. a hemisphere) gets context from the other side.
+    function buildLayerCanvas(layerKey, data, canvasLonMin, canvasLonMax) {
+      const config = layerConfig[layerKey];
+      const records = data.layers[layerKey]
+        .filter(r => r[config.key] !== null && !Number.isNaN(r[config.key]))
+        .map(r => ({ ...r, lon: r.lon > 180 ? r.lon - 360 : r.lon }));
+      const [rMin, rMax] = config.range;
+
+      const lons = [...new Set(records.map(r => r.lon))].sort((a, b) => a - b);
+      const lats = [...new Set(records.map(r => r.lat))].sort((a, b) => a - b);
+      const lonStep = lons.length > 1 ? lons[1] - lons[0] : 2;
+      const latStep = lats.length > 1 ? lats[1] - lats[0] : 2;
+      const dataLonMin = lons[0];
+      const dataLonMax = lons[lons.length - 1];
+      const lonMin = canvasLonMin !== undefined ? canvasLonMin : dataLonMin - lonStep / 2;
+      const lonMax = canvasLonMax !== undefined ? canvasLonMax : dataLonMax + lonStep / 2;
+      const latMin = lats[0] - latStep / 2;
+      const latMax = lats[lats.length - 1] + latStep / 2;
+
+      const lookup = new Map();
+      records.forEach(r => lookup.set(`${r.lon},${r.lat}`, r[config.key]));
+      state.lookups[layerKey] = lookup;
+      // gridInfo always uses full data range so hover lookup works on any view
+      state.gridInfo[layerKey] = { lonStep, latStep, lonMin: dataLonMin - lonStep / 2, lonMax: dataLonMax + lonStep / 2, latMin, latMax, lonStart: lons[0], latStart: lats[0] };
+
+      const pxPerDeg = 8;
+      const fadeDegs = 15;
+      const blurPx = Math.round(pxPerDeg * 2.5);
+      const padPx = blurPx * 3;
+      const padDeg = padPx / pxPerDeg;
+
+      const coreWidth = Math.ceil((lonMax - lonMin) * pxPerDeg);
+      const paddedWidth = coreWidth + 2 * padPx;
+      const height = Math.ceil((latMax - latMin) * pxPerDeg);
+
+      const cvs = document.createElement("canvas");
+      cvs.width = paddedWidth;
+      cvs.height = height;
+      const ctx = cvs.getContext("2d");
+      const img = ctx.createImageData(paddedWidth, height);
+
+      for (let py = 0; py < height; py++) {
+        const lat = latMax - py / pxPerDeg;
+        const ey = cosEdge(py, height, fadeDegs * pxPerDeg);
+
+        for (let px = 0; px < paddedWidth; px++) {
+          let lon = (lonMin - padDeg) + px / pxPerDeg;
+          // Wrap into actual data range using full 360° — works for any sub-range canvas
+          while (lon < dataLonMin) lon += 360;
+          while (lon > dataLonMax + lonStep / 2) lon -= 360;
+          const value = bilinearInterp(lookup, lons, lats, lon, lat, lonStep, latStep);
+          const idx = (py * paddedWidth + px) * 4;
+
+          if (value !== undefined) {
+            const [r, g, b, valueAlpha] = valueToRGBA(value, rMin, rMax, config.cmapCold, config.cmapWarm);
+            const alpha = Math.round(ey * valueAlpha * 255);
+            img.data[idx] = r;
+            img.data[idx + 1] = g;
+            img.data[idx + 2] = b;
+            img.data[idx + 3] = alpha;
+          }
+        }
+      }
+
+      ctx.putImageData(img, 0, 0);
+
+      const blurredPadded = document.createElement("canvas");
+      blurredPadded.width = paddedWidth;
+      blurredPadded.height = height;
+      const bCtx = blurredPadded.getContext("2d");
+      bCtx.filter = `blur(${blurPx}px)`;
+      bCtx.drawImage(cvs, 0, 0);
+
+      const blurred = document.createElement("canvas");
+      blurred.width = coreWidth;
+      blurred.height = height;
+      blurred.getContext("2d").drawImage(blurredPadded, padPx, 0, coreWidth, height, 0, 0, coreWidth, height);
+
+      return { canvas: blurred, lonMin, lonMax, latMin, latMax };
+    }
+
+    // --- GeoJSON builders (raw 0-360 longitudes; Mapbox GL JS handles antimeridian wrapping) ---
+
+    function buildLayerGeoJSON(layerKey, data) {
+      const config = layerConfig[layerKey];
+      const records = data.layers[layerKey];
+      const wide = layerKey === "precip" || layerKey === "cloud";
+      const halfLon = wide ? 1.25 : 1.0;
+      const halfLat = wide ? 0.9425 : 1.0;
+      return {
+        type: "FeatureCollection",
+        features: records
+          .filter(r => r[config.key] !== null && !Number.isNaN(r[config.key]))
+          .map(r => ({ ...r, lon: r.lon > 180 ? r.lon - 360 : r.lon }))
+          .map(r => ({
+            type: "Feature",
+            geometry: {
+              type: "Polygon",
+              coordinates: [[[r.lon - halfLon, r.lat - halfLat], [r.lon + halfLon, r.lat - halfLat],
+                              [r.lon + halfLon, r.lat + halfLat], [r.lon - halfLon, r.lat + halfLat],
+                              [r.lon - halfLon, r.lat - halfLat]]]
+            },
+            properties: { value: r[config.key], lon: r.lon, lat: r.lat }
+          }))
+      };
+    }
+
+    // --- Mapbox layer management ---
+
+    function addRasterLayer(key) {
+      if (state.builtLayers.has(key) || state.map.getSource("src-raster-w-" + key)) return;
+      const map = state.map;
+      // Two hemisphere canvases eliminate the antimeridian seam: each source covers ≤180°
+      // so Mapbox never has to stitch a full-globe texture edge on the globe projection.
+      // The join at 0° (Prime Meridian, over Africa) is invisible because both halves
+      // use the same underlying data and blur context.
+      for (const [suffix, cLonMin, cLonMax] of [["w", -180, 0], ["e", 0, 180]]) {
+        const { canvas, lonMin, lonMax, latMin, latMax } = buildLayerCanvas(key, state.data, cLonMin, cLonMax);
+        map.addSource("src-raster-" + suffix + "-" + key, {
+          type: "canvas",
+          canvas,
+          coordinates: [[lonMin, latMax], [lonMax, latMax], [lonMax, latMin], [lonMin, latMin]],
+          animate: false
+        });
+        map.addLayer({
+          id: "layer-raster-" + suffix + "-" + key,
+          type: "raster",
+          source: "src-raster-" + suffix + "-" + key,
+          slot: "top",
+          layout: { visibility: key === state.layer ? "visible" : "none" },
+          paint: { "raster-opacity": 0.72, "raster-fade-duration": 0, "raster-resampling": "linear", "raster-saturation": 0.2, "raster-contrast": 0.1, "raster-brightness-max": 0.78 }
+        });
+      }
+      state.builtLayers.add(key);
+    }
+
+    function prebuildRemainingLayers() {
+      const pending = Object.keys(layerConfig).filter(key => !state.builtLayers.has(key));
+      const schedule = (callback) => {
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(callback, { timeout: 2500 });
+        } else {
+          window.setTimeout(callback, 900);
+        }
+      };
+
+      const buildNext = () => {
+        if (!pending.length || !state.map || !state.map.isStyleLoaded()) return;
+        const globePanel = state.quizGlobeActive
+          ? document.getElementById("quizRightPane")
+          : document.getElementById("storyRight");
+        const rect = globePanel?.getBoundingClientRect();
+        const exhibitInView = rect && rect.top < window.innerHeight && rect.bottom > 0;
+        if (exhibitInView) {
+          schedule(buildNext);
+          return;
+        }
+        addRasterLayer(pending.shift());
+        setMapLayer(state.layer);
+        if (pending.length) schedule(buildNext);
+      };
+
+      schedule(buildNext);
+    }
+
+    function initMapLayers(data) {
+      const map = state.map;
+
+      // Only build the active layer on first load; others are deferred until first use
+      addRasterLayer(state.layer);
+
+      // Dim the base globe so data overlay pops more clearly
+      map.addLayer({
+        id: "globe-dim",
+        type: "background",
+        slot: "middle",
+        paint: { "background-color": "#000000", "background-opacity": 0.42 }
+      });
+
+    }
+
+    function setMapLayer(key) {
+      if (!state.map) return;
+      state.builtLayers.forEach(k => {
+        for (const suffix of ["w", "e"]) {
+          const id = "layer-raster-" + suffix + "-" + k;
+          if (state.map.getLayer(id)) {
+            state.map.setLayoutProperty(id, "visibility", k === key ? "visible" : "none");
+          }
+        }
+      });
+    }
+
+    function resetReadout() {
+      document.querySelector("#hoverTitle").textContent = "Hover map for values";
+      document.querySelector("#hoverText").textContent = "";
+      document.querySelector(".map-readout").classList.remove("is-visible");
+    }
+
+    function showReadoutHint() {
+      document.querySelector("#hoverTitle").textContent = "Hover map for values";
+      document.querySelector("#hoverText").textContent = "Move over the colored ocean map";
+      document.querySelector(".map-readout").classList.add("is-visible");
+    }
+
+    function getLayerInterpretation(layerKey, value) {
+      if (layerKey === "combined") {
+        if (value > 0.15) return "Strong El Nino fingerprint: multiple effects line up here.";
+        if (value < -0.15) return "Opposite or weaker El Nino response here.";
+        return "Weak or mixed El Nino fingerprint here.";
+      }
+
+      if (layerKey === "sst") {
+        return value >= 0 ? "Warmer ocean surface than neutral months." : "Cooler ocean surface than neutral months.";
+      }
+
+      if (layerKey === "precip") {
+        return value >= 0 ? "Wetter than neutral months." : "Drier than neutral months.";
+      }
+
+      if (layerKey === "cloud") {
+        return value >= 0 ? "Cloudier than neutral months." : "Clearer than neutral months.";
+      }
+
+      if (layerKey === "rsut") {
+        return value >= 0
+          ? "More outgoing shortwave radiation, meaning more reflected sunlight escapes."
+          : "Less outgoing shortwave radiation, often linked with thicker cloud cover.";
+      }
+
+      return "";
+    }
+
+    function formatLayerValue(layerKey, value) {
+      if (layerKey === "combined") return value.toFixed(3) + " index";
+      if (layerKey === "sst") return value.toFixed(2) + " °C";
+      if (layerKey === "precip") return value.toFixed(2) + " mm/day";
+      if (layerKey === "cloud") return value.toFixed(1) + " percentage points";
+      if (layerKey === "rsut") return value.toFixed(1) + " W/m²";
+      return value.toFixed(3);
+    }
+
+    function updateMapReadout(locationText, config, value) {
+      const layerKey = state.layer;
+      document.querySelector("#hoverTitle").textContent = locationText;
+      document.querySelector("#hoverText").innerHTML =
+        `<span class="readout-layer">${config.label}</span>` +
+        `<span class="readout-value">${formatLayerValue(layerKey, value)}</span>` +
+        `<span class="readout-meaning">${getLayerInterpretation(layerKey, value)}</span>`;
+      document.querySelector(".map-readout").classList.add("is-visible");
+    }
+
+    function positionReadout(event) {
+      const mapWrap = document.querySelector("#mapWrap");
+      const readout = document.querySelector(".map-readout");
+      const rect = mapWrap.getBoundingClientRect();
+      const readoutRect = readout.getBoundingClientRect();
+      const gap = 14;
+      const maxX = Math.max(gap, rect.width - readoutRect.width - gap);
+      const maxY = Math.max(gap, rect.height - readoutRect.height - gap);
+      let x = event.clientX - rect.left + gap;
+      let y = event.clientY - rect.top + gap;
+
+      if (x > maxX) x = event.clientX - rect.left - readoutRect.width - gap;
+      if (y > maxY) y = event.clientY - rect.top - readoutRect.height - gap;
+
+      readout.style.setProperty("--hover-x", `${Math.max(gap, Math.min(maxX, x))}px`);
+      readout.style.setProperty("--hover-y", `${Math.max(gap, Math.min(maxY, y))}px`);
+      readout.classList.add("is-visible");
+    }
+
+    function getNearestLayerValue(layerKey, lon, lat) {
+      const gi = state.gridInfo[layerKey];
+      const lookup = state.lookups[layerKey];
+      if (!gi || !lookup) return null;
+
+      const { lonStep, latStep, lonStart, latStart } = gi;
+      const lonPad = lonStep * 2;
+      const latPad = latStep * 2;
+      if (lon < gi.lonMin - lonPad || lon > gi.lonMax + lonPad ||
+          lat < gi.latMin - latPad || lat > gi.latMax + latPad) {
+        return null;
+      }
+
+      const baseLon = lonStart + Math.round((lon - lonStart) / lonStep) * lonStep;
+      const baseLat = latStart + Math.round((lat - latStart) / latStep) * latStep;
+      let best = null;
+
+      for (let radius = 0; radius <= 2; radius++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          for (let dy = -radius; dy <= radius; dy++) {
+            const snapLon = Number((baseLon + dx * lonStep).toFixed(6));
+            const snapLat = Number((baseLat + dy * latStep).toFixed(6));
+            const value = lookup.get(`${snapLon},${snapLat}`);
+            if (value === undefined) continue;
+
+            const distance = Math.hypot((snapLon - lon) / lonStep, (snapLat - lat) / latStep);
+            if (!best || distance < best.distance) {
+              best = { lon: snapLon, lat: snapLat, value, distance };
+            }
+          }
+        }
+        if (best) return best;
+      }
+
+      return null;
+    }
+
+    function setupMapEvents() {
+      const map = state.map;
+      let hoverFrame = null;
+      let pendingHoverPoint = null;
+
+      function updateReadoutFromPoint(point) {
+        if (!state.globeFocus && !state.quizGlobeActive) return;
+        const lngLat = map.unproject(point);
+        // Normalize to -180/180 range
+        const lon = ((lngLat.lng % 360) + 540) % 360 - 180;
+        const lat = lngLat.lat;
+
+        const nearest = getNearestLayerValue(state.layer, lon, lat);
+        if (nearest) {
+          const config = layerConfig[state.layer];
+          updateMapReadout(formatLon(nearest.lon) + ", " + formatLat(nearest.lat), config, nearest.value);
+        } else {
+          showReadoutHint();
+        }
+      }
+
+      map.on("mousemove", e => {
+        if (!state.globeFocus && !state.quizGlobeActive) return;
+        if (e.originalEvent) positionReadout(e.originalEvent);
+        pendingHoverPoint = e.point;
+        if (hoverFrame) return;
+        hoverFrame = requestAnimationFrame(() => {
+          hoverFrame = null;
+          if (pendingHoverPoint) updateReadoutFromPoint(pendingHoverPoint);
+        });
+      });
+
+      const mapWrap = document.querySelector("#mapWrap");
+      let wheelFrame = null;
+      let rotateLngDelta = 0;
+      let rotateLatDelta = 0;
+      let zoomDelta = 0;
+
+      const flushWheel = () => {
+        wheelFrame = null;
+        if (!state.globeFocus || !state.map || !state.map.isStyleLoaded()) {
+          rotateLngDelta = 0;
+          rotateLatDelta = 0;
+          zoomDelta = 0;
+          return;
+        }
+
+        if (zoomDelta) {
+          const nextZoom = Math.max(
+            state.map.getMinZoom(),
+            Math.min(state.map.getMaxZoom(), state.map.getZoom() - zoomDelta * 0.005)
+          );
+          state.map.jumpTo({ zoom: nextZoom });
+        } else if (rotateLngDelta || rotateLatDelta) {
+          const center = state.map.getCenter();
+          const nextLat = Math.max(-65, Math.min(65, center.lat - rotateLatDelta * 0.045));
+          state.map.setCenter([center.lng + rotateLngDelta * 0.08, nextLat]);
+        }
+
+        rotateLngDelta = 0;
+        rotateLatDelta = 0;
+        zoomDelta = 0;
+      };
+
+      const queueHoverFromEvent = (event) => {
+        if (!state.globeFocus && !state.quizGlobeActive) return;
+        if (!state.map || !state.map.isStyleLoaded()) return;
+        positionReadout(event);
+        const rect = state.map.getCanvas().getBoundingClientRect();
+        pendingHoverPoint = [
+          event.clientX - rect.left,
+          event.clientY - rect.top
+        ];
+        if (hoverFrame) return;
+        hoverFrame = requestAnimationFrame(() => {
+          hoverFrame = null;
+          if (pendingHoverPoint) updateReadoutFromPoint(pendingHoverPoint);
+        });
+      };
+
+      mapWrap.addEventListener("mouseenter", () => {
+        if (state.globeFocus || state.quizGlobeActive) showReadoutHint();
+      });
+      mapWrap.addEventListener("mousemove", queueHoverFromEvent);
+      mapWrap.addEventListener("mouseleave", resetReadout);
+
+      mapWrap.addEventListener("wheel", (event) => {
+        if (!state.globeFocus || !state.map || !state.map.isStyleLoaded()) return;
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (event.ctrlKey || event.metaKey) {
+          zoomDelta += event.deltaY;
+        } else {
+          rotateLngDelta += event.deltaX;
+          rotateLatDelta += event.deltaY;
+        }
+
+        if (!wheelFrame) wheelFrame = requestAnimationFrame(flushWheel);
+      }, { passive: false });
+
+      map.on("render", repositionGlobeLabels);
+
+    }
+
+    // --- Timeline (D3) ---
+
+    function drawTimeline() {
+      if (!state.data || typeof d3 === "undefined") return;
+
+      const svgNode = timelineSvg.node();
+      const rect = svgNode.getBoundingClientRect();
+      const width = Math.max(360, rect.width);
+      const height = Math.max(180, rect.height || 210);
+      const margin = { top: 24, right: 18, bottom: 36, left: 52 };
+      const innerWidth = width - margin.left - margin.right;
+      const innerHeight = height - margin.top - margin.bottom;
+      const parseMonth = d3.timeParse("%Y-%m");
+      const data = state.data.timeline.map((d, i) => ({
+        ...d,
+        index: i,
+        dateObj: parseMonth(d.date) || new Date(d.date)
+      }));
+
+      timelineSvg
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("preserveAspectRatio", "none")
+        .selectAll("*")
+        .remove();
+
+      const x = d3.scaleTime()
+        .domain([new Date(1950, 0, 1), new Date(2015, 0, 1)])
+        .range([margin.left, width - margin.right]);
+
+      const y = d3.scaleLinear()
+        .domain([-3, 3])
+        .range([height - margin.bottom, margin.top]);
+
+      const barWidth = Math.max(1, innerWidth / data.length);
+      const phaseColor = d => d.phase === "el_nino" ? "#c1341e" : d.phase === "la_nina" ? "#1d6fa3" : "#9ba6ab";
+      const phaseLabel = d => d.phase === "el_nino" ? "El Nino-like" : d.phase === "la_nina" ? "La Nina-like" : "Neutral";
+
+      const g = timelineSvg.append("g");
+
+      g.append("line")
+        .attr("class", "zero-line")
+        .attr("x1", margin.left)
+        .attr("x2", width - margin.right)
+        .attr("y1", y(0))
+        .attr("y2", y(0));
+
+      [0.5, -0.5].forEach(threshold => {
+        g.append("line")
+          .attr("class", "threshold-line")
+          .attr("x1", margin.left)
+          .attr("x2", width - margin.right)
+          .attr("y1", y(threshold))
+          .attr("y2", y(threshold));
+
+        const label = `${threshold > 0 ? "+" : ""}${threshold} °C`;
+        const labelX = margin.left + 7;
+        const labelY = y(threshold);
+        g.append("text")
+          .attr("class", "threshold-label")
+          .attr("x", labelX + 8)
+          .attr("y", labelY + 4)
+          .attr("text-anchor", "start")
+          .text(label)
+          .each(function () {
+            const bbox = this.getBBox();
+            d3.select(this.parentNode)
+              .insert("rect", "text.threshold-label")
+              .attr("class", "threshold-label-bg")
+              .attr("x", bbox.x - 6)
+              .attr("y", bbox.y - 3)
+              .attr("width", bbox.width + 12)
+              .attr("height", bbox.height + 6)
+              .attr("rx", 5)
+              .attr("ry", 5);
+          });
+      });
+
+      g.selectAll(".timeline-bar")
+        .data(data)
+        .join("rect")
+        .attr("class", "timeline-bar")
+        .attr("x", d => x(d.dateObj))
+        .attr("y", d => y(Math.max(0, d.nino34_anomaly_c)))
+        .attr("width", barWidth)
+        .attr("height", d => Math.max(1, Math.abs(y(d.nino34_anomaly_c) - y(0))))
+        .attr("fill", phaseColor)
+        .on("mousemove", (event, d) => {
+          const wrapRect = document.querySelector(".timeline-wrap").getBoundingClientRect();
+          timelineTooltip
+            .html(`<strong>${d.date}</strong><span>Niño 3.4 anomaly: ${d.nino34_anomaly_c.toFixed(2)} °C</span><br><span>Phase: ${phaseLabel(d)}</span>`)
+            .style("left", `${event.clientX - wrapRect.left}px`)
+            .style("top", `${event.clientY - wrapRect.top}px`)
+            .classed("is-visible", true);
+        })
+        .on("mouseleave", () => {
+          timelineTooltip.classed("is-visible", false);
+        })
+        .on("click", (event, d) => {
+          state.selectedTimelineIndex = d.index;
+          drawTimeline();
+        });
+
+      if (state.selectedTimelineIndex !== null && data[state.selectedTimelineIndex]) {
+        const selected = data[state.selectedTimelineIndex];
+        g.append("line")
+          .attr("class", "selected-marker")
+          .attr("x1", x(selected.dateObj) + barWidth / 2)
+          .attr("x2", x(selected.dateObj) + barWidth / 2)
+          .attr("y1", margin.top)
+          .attr("y2", height - margin.bottom);
+      }
+
+      const xAxis = d3.axisBottom(x)
+        .tickValues(d3.timeYear.every(10).range(new Date(1950, 0, 1), new Date(2015, 0, 1)))
+        .tickFormat(d3.timeFormat("%Y"))
+        .tickSizeOuter(0);
+
+      const yAxis = d3.axisLeft(y)
+        .tickValues([-3, -1.5, 0, 1.5, 3])
+        .tickFormat(d => `${d > 0 ? "+" : ""}${d}`);
+
+      g.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .call(xAxis);
+
+      g.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(yAxis);
+
+      g.append("text")
+        .attr("class", "axis-label")
+        .attr("x", 14)
+        .attr("y", margin.top - 8)
+        .text("°C");
+    }
+
+    // --- UI controls ---
+
+    function getLayerButtonLabel(key) {
+      const labels = {
+        combined: "Fingerprint",
+        sst: "SST",
+        precip: "Rain",
+        cloud: "Clouds",
+        rsut: "Radiation"
+      };
+      return labels[key] || layerConfig[key].label;
+    }
+
+    function renderFacts() {
+      const meta = state.data.meta;
+      document.querySelector("#facts").innerHTML = `
+        <div class="fact"><strong>${meta.el_nino_months}</strong><span>El Nino-like months</span></div>
+        <div class="fact"><strong>${meta.neutral_months}</strong><span>neutral months</span></div>
+        <div class="fact"><strong>${meta.nino34_threshold_c} °C</strong><span>Nino 3.4 threshold</span></div>
+        <div class="fact fact-period"><strong>${meta.years}</strong><span>CESM2 historical period</span></div>
+      `;
+      const totalMonths = 780; // 65 years × 12 months (1950–2014)
+      const laNinaMonths = totalMonths - meta.el_nino_months - meta.neutral_months;
+      document.getElementById("statElNino").textContent = meta.el_nino_months;
+      document.getElementById("statNeutral").textContent = meta.neutral_months;
+      document.getElementById("statLaNina").textContent = laNinaMonths > 0 ? laNinaMonths : meta.el_nino_months;
+    }
+
+    function setupNarrativeReveals() {
+      const sections = document.querySelectorAll(".reveal-section");
+      if (!sections.length) return;
+
+      if (!("IntersectionObserver" in window)) {
+        sections.forEach(section => section.classList.add("is-visible"));
+        return;
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.16, rootMargin: "0px 0px -8% 0px" });
+
+      sections.forEach(section => observer.observe(section));
+    }
+
+    function setupScrollytellingObserver() {
+      if (!("IntersectionObserver" in window)) {
+        document.querySelectorAll(".story-section, .standalone-section").forEach(s => {
+          s.classList.add("is-visible");
+        });
+        return;
+      }
+
+      // ── Entrance animation: fade section in when it enters the viewport ──
+      const revealObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          entry.target.classList.toggle("is-visible", entry.isIntersecting);
+        });
+      }, { threshold: 0.10 });
+
+      document.querySelectorAll(".story-section").forEach(s => revealObs.observe(s));
+      document.querySelectorAll(".standalone-section").forEach(s => revealObs.observe(s));
+
+      // ── Layer switching: fire when a section scrolls into the center band ──
+      // rootMargin of -40% top/bottom creates a 20%-tall trigger zone in the middle
+      // of the viewport, so layers swap at the natural reading position.
+      const layerObs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const s = entry.target;
+
+          if (s.dataset.layer) {
+            if (s.dataset.layer !== state.layer) setLayer(s.dataset.layer);
+          } else {
+            updateGlobeLabels(s.id.replace("section-", ""));
+          }
+
+          const { cameraLng, cameraLat, cameraZoom } = s.dataset;
+          if (state.map && cameraLng != null && !state.userInteracting) {
+            state.storyCameraUntil = Date.now() + 2200;
+            state.map.flyTo({
+              center: [+cameraLng, +cameraLat],
+              zoom: +cameraZoom,
+              duration: 1400,
+              essential: true
+            });
+          }
+        });
+      }, { rootMargin: "-40% 0px -40% 0px", threshold: 0 });
+
+      document.querySelectorAll(".story-section").forEach(s => layerObs.observe(s));
+    }
+
+    function setupSectionNav() {
+      const SECTION_ORDER = [
+        "section-intro", "section-facts", "section-combined",
+        "section-sst", "section-precip", "section-cloud", "section-rsut"
+      ];
+
+      function activateSection(section) {
+        document.querySelectorAll(".story-section.is-active").forEach(s => s.classList.remove("is-active"));
+        section.classList.add("is-active");
+        section.classList.add("is-visible");
+
+        const { layer, cameraLng, cameraLat, cameraZoom } = section.dataset;
+
+        if (layer && layer !== state.layer) {
+          setLayer(layer);
+        } else if (!layer) {
+          // Sections without a data layer (intro, facts) still show their own labels
+          updateGlobeLabels(section.id.replace("section-", ""));
+        }
+
+        if (state.map && cameraLng != null) {
+          state.storyCameraUntil = Date.now() + 2200;
+          state.map.flyTo({
+            center: [+cameraLng, +cameraLat],
+            zoom: +cameraZoom,
+            duration: 1400,
+            essential: true
+          });
+        }
+
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+    }
+
+    function setMapLoading(isLoading, label = "map layer") {
+      const overlay = document.querySelector("#mapLoadingOverlay");
+      if (!overlay) return;
+      const title = document.querySelector("#mapLoadingTitle");
+      const text = document.querySelector("#mapLoadingText");
+
+      if (title) title.textContent = isLoading ? `Building ${label}` : "Building map layer";
+      if (text) text.textContent = "Preparing the next El Nino signal for the globe.";
+      overlay.classList.toggle("is-visible", isLoading);
+      overlay.setAttribute("aria-hidden", String(!isLoading));
+    }
+
+    function enterGlobeFocus() {
+      state.globeFocus = true;
+      state.map?.scrollZoom.enable();
+    }
+
+    function exitGlobeFocus() {
+      state.globeFocus = false;
+      state.map?.scrollZoom.disable();
+    }
+
+    function updateActiveStoryStep(key) {
+      const steps = Array.from(document.querySelectorAll(".story-step"));
+      steps.forEach((step, index) => {
+        const isActive = step.dataset.layer === key;
+        step.classList.toggle("is-active", isActive);
+        if (isActive) {
+          const kicker = step.querySelector(".story-step-kicker")?.textContent?.trim();
+          const heading = step.querySelector("h3")?.textContent?.trim();
+          const body = step.dataset.captionBody || step.querySelector("p:last-child")?.textContent?.trim();
+          if (kicker) document.querySelector("#captionKicker").textContent = kicker;
+          if (heading) document.querySelector("#captionHeading").textContent = heading;
+          if (body) document.querySelector("#captionBody").textContent = body;
+        }
+      });
+    }
+
+    function setupGlobeDrift() {
+      if (!state.map || state.autoSpinFrame) return;
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) return;
+
+      const mapWrap = document.querySelector("#mapWrap");
+      const pause = () => { state.userInteracting = true; };
+      const resume = () => {
+        window.setTimeout(() => {
+          state.userInteracting = false;
+          state.lastSpinTime = null;
+        }, 700);
+      };
+
+      ["dragstart", "rotatestart", "zoomstart"].forEach(eventName => state.map.on(eventName, pause));
+      ["dragend", "rotateend", "zoomend"].forEach(eventName => state.map.on(eventName, resume));
+      mapWrap.addEventListener("pointerdown", pause);
+      mapWrap.addEventListener("pointerup", resume);
+      mapWrap.addEventListener("pointerleave", resume);
+
+      const drift = (timestamp) => {
+        const globePanel = document.getElementById("storyRight");
+        const rect = globePanel ? globePanel.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+        const inView = rect.top < window.innerHeight && rect.bottom > 0;
+        const canDrift = inView && !state.userInteracting && Date.now() > state.storyCameraUntil && state.map.isStyleLoaded();
+
+        if (!state.lastSpinTime) state.lastSpinTime = timestamp;
+        const elapsed = Math.min(140, timestamp - state.lastSpinTime);
+
+        if (canDrift) {
+          const center = state.map.getCenter();
+          state.map.setCenter([center.lng + elapsed * 0.00045, center.lat]);
+        }
+
+        state.lastSpinTime = timestamp;
+        state.autoSpinFrame = requestAnimationFrame(drift);
+      };
+
+      state.autoSpinFrame = requestAnimationFrame(drift);
+    }
+
+    const globeLabelDefs = {
+      intro: [
+        {
+          lng: -118, lat: 4, text: "El Niño warming core", color: "#c8d0d4", side: "bottom",
+          description: "Where ocean heat builds up during El Niño.",
+          detail: "The central and eastern Pacific accumulate heat over months as trade winds relax, raising surface temps by 2–4 °C above normal. This warmth fuels the atmospheric disruptions felt worldwide."
+        },
+        {
+          lng: 142, lat: 0, text: "Pacific basin", color: "#c8d0d4", side: "bottom",
+          description: "Earth's largest ocean — a global weather engine.",
+          detail: "The Pacific spans 165 million km², nearly a third of Earth's surface. Small temperature shifts here are enough to reorganize jet streams, monsoons, and storm tracks across multiple continents."
+        }
+      ],
+      facts: [
+        {
+          lng: -78, lat: -3, text: "Warm water source", color: "#c8d0d4", side: "right",
+          description: "Heat energy stored in the western Pacific.",
+          detail: "Trade winds push warm surface water westward for months. When winds weaken, this reservoir of heat sloshes back east — the trigger for El Niño. The deeper the pool, the stronger the event."
+        },
+        {
+          lng: -128, lat: 5, text: "Spreads eastward", color: "#c8d0d4", side: "bottom",
+          description: "The signature El Niño migration.",
+          detail: "Warm water moving east along the equator suppresses cold upwelling and eliminates the 'cold tongue.' The tropical rain belt follows the heat, shifting storm systems thousands of miles from their normal positions."
+        }
+      ],
+      combined: [
+        {
+          lng: -138, lat: 2, text: "Strong signal", color: "#e8a020", side: "bottom",
+          description: "Multiple El Niño indicators align here.",
+          detail: "When SST warming, increased rainfall, higher cloud cover, and outgoing radiation changes all point in the same direction, the fingerprint score peaks. This is where the full El Niño footprint is clearest."
+        },
+        {
+          lng: 138, lat: 5, text: "Opposite or weak", color: "#9ba6ab", side: "bottom",
+          description: "Western Pacific responds in reverse.",
+          detail: "As the eastern Pacific warms, the west cools slightly. Less evaporation reduces rainfall and cloud cover there. La Niña is essentially this pattern reversed, with the west warming strongly instead."
+        }
+      ],
+      sst: [
+        {
+          lng: -128, lat: 0, text: "Niño 3.4 core", color: "#dc2020", side: "bottom",
+          description: "The standard El Niño measurement zone.",
+          detail: "Sea surface temperatures in this 5°N–5°S, 120°W–170°W box define official El Niño thresholds. Anomalies above +0.5 °C for five consecutive months classify as an El Niño event."
+        },
+        {
+          lng: 148, lat: -5, text: "Western Pacific cool", color: "#1d6fa3", side: "bottom",
+          description: "The cold counterpart to eastern warming.",
+          detail: "Warmer east means cooler west. The Walker Circulation — the atmospheric loop connecting the two — weakens and shifts, reducing upwelling in the west and further cooling those waters."
+        }
+      ],
+      precip: [
+        {
+          lng: -148, lat: 4, text: "Increased rainfall", color: "#10a060", side: "right",
+          description: "Rain belt migrates thousands of miles east.",
+          detail: "Convection follows warm water. Central Pacific islands and the Americas' west coast receive flooding rains that normally fall over Indonesia. Flash floods and landslides often accompany strong events."
+        },
+        {
+          lng: 128, lat: 0, text: "Drying — Indonesia", color: "#d2821e", side: "left",
+          description: "Drought where monsoon rain is expected.",
+          detail: "Indonesia, Papua New Guinea, and northern Australia face severe drought and wildfire risk as the warm water — and the convective rain — moves away. Crop failures and water shortages follow prolonged dry spells."
+        }
+      ],
+      cloud: [
+        {
+          lng: -155, lat: 5, text: "Cloudier skies", color: "#8020d0", side: "bottom",
+          description: "Convective clouds rise over warm water.",
+          detail: "Higher sea surface temperatures drive evaporation, which feeds towering cumulonimbus clouds and persistent overcast skies. The extra cloud cover reflects more sunlight and traps outgoing heat below."
+        },
+        {
+          lng: 122, lat: 4, text: "Clearer skies", color: "#c88c14", side: "bottom",
+          description: "Subsidence suppresses cloud formation.",
+          detail: "Cooler waters in the west reduce vertical air motion. Skies clear as sinking air warms and dries in descent, dramatically reducing cloud cover and allowing more solar radiation to reach the surface."
+        }
+      ],
+      rsut: [
+        {
+          lng: -145, lat: 5, text: "More reflected", color: "#cc14b0", side: "bottom",
+          description: "Thick clouds act as a planetary mirror.",
+          detail: "Dense cloud decks over the warmer eastern Pacific reflect incoming solar radiation back to space before it can heat the surface. This reduces the amount of energy the ocean absorbs in the short term."
+        },
+        {
+          lng: 135, lat: 0, text: "Less reflected", color: "#8cc80a", side: "bottom",
+          description: "Open skies let sunlight through.",
+          detail: "Reduced cloud cover in the western Pacific means more direct sunlight reaches the ocean surface. The extra energy absorption amplifies the existing temperature contrast between east and west."
+        }
+      ]
+    };
+
+    let _tipHintDismissed = false;
+    let _dragHintTimer = null;
+
+    function dismissTipHint() {
+      if (_tipHintDismissed) return;
+      _tipHintDismissed = true;
+      const hint = document.querySelector("#globeTipHint");
+      if (hint) hint.classList.add("is-hidden");
+    }
+
+    function startDragHintTimer() {
+      if (_dragHintTimer) clearTimeout(_dragHintTimer);
+      const hint = document.querySelector("#globeDragHint");
+      if (!hint) return;
+      hint.classList.remove("is-hidden");
+      _dragHintTimer = setTimeout(() => {
+        hint.classList.add("is-hidden");
+      }, 6000);
+    }
+
+    function updateGlobeLabels(key) {
+      const container = document.querySelector("#globe-labels");
+      if (!container || !state.map) return;
+      container.innerHTML = "";
+      const defs = globeLabelDefs[key] || [];
+      state.globeLabelAnchors = defs;
+      const revealAt = String(Date.now() + 1650);
+      setTimeout(repositionGlobeLabels, 1750);
+      startDragHintTimer();
+      defs.forEach(def => {
+        const el = document.createElement("div");
+        el.className = "globe-label";
+        el.dataset.revealAt = revealAt;
+        if (def.side) el.dataset.side = def.side;
+
+        const dot = document.createElement("span");
+        dot.className = "globe-label-dot";
+        dot.style.background = def.color;
+        el.appendChild(dot);
+
+        const body = document.createElement("div");
+        body.className = "globe-label-body";
+
+        const title = document.createElement("p");
+        title.className = "globe-label-title";
+        title.textContent = def.text;
+        body.appendChild(title);
+
+        if (def.description) {
+          const desc = document.createElement("p");
+          desc.className = "globe-label-desc";
+          desc.textContent = def.description;
+          body.appendChild(desc);
+        }
+
+        if (def.detail) {
+          const detail = document.createElement("p");
+          detail.className = "globe-label-detail";
+          detail.textContent = def.detail;
+          body.appendChild(detail);
+
+          const clickHint = document.createElement("p");
+          clickHint.className = "globe-label-click-hint";
+          clickHint.textContent = "▶ Click to expand";
+          body.appendChild(clickHint);
+
+          el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const expanded = el.classList.toggle("globe-label--expanded");
+            clickHint.textContent = expanded ? "▼ Click to collapse" : "▶ Click to expand";
+            dismissTipHint();
+          });
+        }
+
+        el.appendChild(body);
+        container.appendChild(el);
+      });
+      repositionGlobeLabels();
+    }
+
+    function repositionGlobeLabels() {
+      const container = document.querySelector("#globe-labels");
+      if (!container || !state.map) return;
+      const anchors = state.globeLabelAnchors || [];
+      const labels = container.querySelectorAll(".globe-label");
+      const mapEl = document.querySelector("#map");
+      const w = mapEl.offsetWidth, h = mapEl.offsetHeight;
+      const now = Date.now();
+      const GAP = 12; // px between arrow tip and anchor point
+
+      const center = state.map.getCenter();
+      const cLat = center.lat * Math.PI / 180;
+      const cLng = center.lng * Math.PI / 180;
+
+      anchors.forEach((anchor, i) => {
+        const el = labels[i];
+        if (!el) return;
+        const pt = state.map.project([anchor.lng, anchor.lat]);
+        const inBounds = pt.x > 40 && pt.x < w - 40 && pt.y > 40 && pt.y < h - 40;
+        const revealed = now >= parseInt(el.dataset.revealAt || "0");
+        const pLat = anchor.lat * Math.PI / 180;
+        const pLng = anchor.lng * Math.PI / 180;
+        const dot = Math.sin(cLat) * Math.sin(pLat) +
+                    Math.cos(cLat) * Math.cos(pLat) * Math.cos(pLng - cLng);
+        const onFront = dot > 0.05;
+        const visible = inBounds && revealed && onFront;
+
+        let tx, ty;
+        const side = (anchor.side || "bottom");
+        switch (side) {
+          case "bottom": // label body sits above point, arrow points down
+            tx = `calc(${pt.x}px - 50%)`;
+            ty = `calc(${pt.y}px - 100% - ${GAP}px)`;
+            break;
+          case "top": // label body sits below point, arrow points up
+            tx = `calc(${pt.x}px - 50%)`;
+            ty = `calc(${pt.y}px + ${GAP}px)`;
+            break;
+          case "right": // label body sits left of point, arrow points right
+            tx = `calc(${pt.x}px - 100% - ${GAP}px)`;
+            ty = `calc(${pt.y}px - 50%)`;
+            break;
+          case "left": // label body sits right of point, arrow points left
+            tx = `calc(${pt.x}px + ${GAP}px)`;
+            ty = `calc(${pt.y}px - 50%)`;
+            break;
+          default:
+            tx = `calc(${pt.x}px - 50%)`;
+            ty = `calc(${pt.y}px - 50%)`;
+        }
+
+        el.style.opacity = visible ? "1" : "0";
+        el.style.pointerEvents = visible ? "auto" : "none";
+        el.style.transform = `translate(${tx}, ${ty})`;
+      });
+    }
+
+    function setLayer(key) {
+      state.layer = key;
+      const config = layerConfig[key];
+      document.documentElement.style.setProperty('--layer-accent', config.accentHex);
+      updateActiveStoryStep(key);
+      document.querySelector("#layerTitle").textContent = config.label;
+      document.querySelector("#layerDescription").textContent = config.description;
+      const noteTip = document.querySelector("#layer-note-tooltip");
+      if (noteTip) {
+        noteTip.textContent = config.note;
+        noteTip.classList.toggle("is-visible", key === "cloud");
+      }
+      updateGlobeLabels(key);
+
+      if (!state.map || !state.map.isStyleLoaded()) return;
+
+      if (!state.builtLayers.has(key)) {
+        setMapLoading(true, getLayerButtonLabel(key));
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            try {
+              if (!state.builtLayers.has(key)) {
+                addRasterLayer(key);
+              }
+              if (state.layer === key) {
+                setMapLayer(key);
+                resetReadout();
+              }
+            } finally {
+              setMapLoading(false);
+            }
+          }, 40);
+        });
+      } else {
+        setMapLoading(false);
+        setMapLayer(key);
+      }
+
+      if (state.quizGlobeActive) updateQuizLayerButtons(key);
+    }
+
+    // --- Event listeners ---
+
+    document.querySelector("#globeEnterBtn").addEventListener("click", enterGlobeFocus);
+    document.querySelector("#globeExitBtn").addEventListener("click", exitGlobeFocus);
+
+    const timelineToggleBtn = document.querySelector("#timelineToggle");
+    if (timelineToggleBtn) {
+      timelineToggleBtn.addEventListener("click", (e) => {
+        const btn = e.currentTarget;
+        const footer = document.querySelector(".viz-footer");
+        const isVisible = footer.classList.toggle("tf-visible");
+        const panel = btn.closest(".viz-panel");
+        if (panel) panel.classList.toggle("timeline-open", isVisible);
+        btn.textContent = isVisible ? "Hide Nino 3.4 timeline" : "Show Nino 3.4 timeline";
+        btn.setAttribute("aria-pressed", String(isVisible));
+      });
+    }
+
+    window.addEventListener("resize", () => {
+      drawTimeline();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && state.globeFocus) {
+        exitGlobeFocus();
+      }
+    });
+
+    // --- Quiz Globe Mode ---
+
+    function enterQuizGlobeMode() {
+      if (state.quizGlobeActive) return;
+      const mapWrap = document.getElementById("mapWrap");
+      const quizRightPane = document.getElementById("quizRightPane");
+      const controls = document.getElementById("quizGlobeControls");
+      state.mapWrapOriginalParent = mapWrap.parentElement;
+      quizRightPane.insertBefore(mapWrap, controls);
+      document.getElementById("section-quiz").classList.add("quiz-active");
+      document.body.classList.add("quiz-mode-active");
+      state.quizGlobeActive = true;
+      state.quizAbortController = new AbortController();
+      const sig = { signal: state.quizAbortController.signal };
+      quizRightPane.addEventListener("mouseenter", () => state.map?.scrollZoom.enable(), sig);
+      quizRightPane.addEventListener("mouseleave", () => state.map?.scrollZoom.disable(), sig);
+      requestAnimationFrame(() => setTimeout(() => {
+        state.map?.resize();
+        updateQuizLayerButtons(state.layer);
+      }, 60));
+    }
+
+    function exitQuizGlobeMode() {
+      if (!state.quizGlobeActive) return;
+      const mapWrap = document.getElementById("mapWrap");
+      if (state.mapWrapOriginalParent && mapWrap.parentElement !== state.mapWrapOriginalParent) {
+        state.mapWrapOriginalParent.appendChild(mapWrap);
+        requestAnimationFrame(() => setTimeout(() => state.map?.resize(), 60));
+      }
+      document.getElementById("section-quiz").classList.remove("quiz-active");
+      document.body.classList.remove("quiz-mode-active");
+      state.quizGlobeActive = false;
+      state.quizAbortController?.abort();
+      state.mapWrapOriginalParent = null;
+    }
+
+    function updateQuizLayerButtons(activeLayer) {
+      document.querySelectorAll(".quiz-layer-btn").forEach(btn => {
+        btn.setAttribute("aria-pressed", String(btn.dataset.layer === activeLayer));
+      });
+    }
+
+    function setupQuizLayerButtons() {
+      document.querySelectorAll(".quiz-layer-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          setLayer(btn.dataset.layer);
+        });
+      });
+    }
+
+    // --- Quiz Game Logic ---
+
+    const gameState = {
+      currentIndex: 0,
+      score: 0,
+      answered: false
+    };
+
+    function enableGameStart() {
+      const btn = document.querySelector("#gameStartBtn");
+      btn.disabled = false;
+      btn.textContent = "Start Quiz \u2192";
+    }
+
+    function startGame() {
+      gameState.currentIndex = 0;
+      gameState.score = 0;
+      gameState.answered = false;
+      document.querySelector("#gameIntro").style.display = "none";
+      document.querySelector("#gameResults").style.display = "none";
+      document.querySelector("#gameBody").style.display = "block";
+      enterQuizGlobeMode();
+      loadQuestion(0);
+    }
+
+    function loadQuestion(index) {
+      const q = QUIZ_QUESTIONS[index];
+      const total = QUIZ_QUESTIONS.length;
+      gameState.answered = false;
+
+      document.querySelector("#gameProgress").textContent = `Question ${index + 1} of ${total}`;
+      document.querySelector("#gameProgressBar").style.width = `${(index / total) * 100}%`;
+      document.querySelector("#gameScoreLabel").textContent = `Score: ${gameState.score}`;
+      document.querySelector("#gameQuestion").textContent = q.question;
+      document.querySelector("#gameNextBtn").textContent =
+        index === total - 1 ? "See Results \u2192" : "Next Question \u2192";
+
+      const optionsEl = document.querySelector("#gameOptions");
+      optionsEl.innerHTML = "";
+      ["A", "B", "C", "D"].forEach((letter, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "game-option";
+        btn.innerHTML = `<span class="opt-letter">${letter}</span>${q.options[i]}`;
+        btn.addEventListener("click", () => handleOptionClick(i));
+        optionsEl.appendChild(btn);
+      });
+
+      document.querySelector("#gameFeedback").style.display = "none";
+    }
+
+    function handleOptionClick(selectedIndex) {
+      if (gameState.answered) return;
+      gameState.answered = true;
+
+      const q = QUIZ_QUESTIONS[gameState.currentIndex];
+      const isCorrect = selectedIndex === q.correctIndex;
+      if (isCorrect) gameState.score++;
+
+      document.querySelectorAll(".game-option").forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correctIndex) btn.classList.add("opt-correct");
+        else if (i === selectedIndex) btn.classList.add("opt-wrong");
+      });
+
+      const verdict = document.querySelector("#feedbackVerdict");
+      verdict.textContent = isCorrect ? "Correct!" : "Not quite.";
+      verdict.className = "feedback-verdict " + (isCorrect ? "is-correct" : "is-wrong");
+      document.querySelector("#feedbackExplanation").textContent = q.explanation;
+      document.querySelector("#feedbackMapHint").textContent = q.mapHint;
+      document.querySelector("#gameScoreLabel").textContent = `Score: ${gameState.score}`;
+      document.querySelector("#gameViewMapBtn").textContent = "\u2191 View on map";
+      document.querySelector("#gameFeedback").style.display = "grid";
+    }
+
+    function viewOnMap() {
+      const q = QUIZ_QUESTIONS[gameState.currentIndex];
+      setLayer(q.layer);
+
+      if (q.mapFocus && state.map) {
+        state.storyCameraUntil = Date.now() + 2200;
+        state.map.flyTo({
+          center: q.mapFocus.center,
+          zoom: q.mapFocus.zoom,
+          duration: 1200,
+          essential: true
+        });
+      }
+
+      document.querySelector("#gameViewMapBtn").textContent = "\u2191 On map now";
+    }
+
+    function backToQuiz() {
+      const banner = document.querySelector("#backToQuizBanner");
+      banner.classList.remove("is-visible");
+      banner.setAttribute("aria-hidden", "true");
+
+      document.getElementById("section-quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function advanceQuestion() {
+      const nextIndex = gameState.currentIndex + 1;
+      if (nextIndex >= QUIZ_QUESTIONS.length) {
+        showResults();
+      } else {
+        gameState.currentIndex = nextIndex;
+        loadQuestion(nextIndex);
+      }
+    }
+
+    function showResults() {
+      document.querySelector("#gameBody").style.display = "none";
+      document.querySelector("#gameResults").style.display = "block";
+
+      const total = QUIZ_QUESTIONS.length;
+      const score = gameState.score;
+      document.querySelector("#finalScore").textContent = `${score} / ${total}`;
+
+      let message;
+      if (score === total) {
+        message = "Perfect score! You already think like a climate scientist. El Ni\u00f1o holds no secrets from you.";
+      } else if (score >= total - 1) {
+        message = "Excellent! You\u2019ve got a strong grasp of how El Ni\u00f1o rewires the Pacific. One more round and you\u2019ll be forecasting alongside NOAA.";
+      } else if (score >= Math.ceil(total / 2)) {
+        message = "Solid intuition! You understand the big picture \u2014 a few more explorations of the map layers and the details will click.";
+      } else if (score >= 2) {
+        message = "Good start! El Ni\u00f1o is genuinely complex \u2014 a single ocean anomaly reorganizing rain, clouds, and radiation across the planet is remarkable. Explore the map layers and try again.";
+      } else {
+        message = "El Ni\u00f1o is one of Earth\u2019s most intricate climate signals. Even meteorologists spent decades unraveling it. Try clicking through the map layers above \u2014 the patterns become obvious once you see them.";
+      }
+
+      document.querySelector("#resultsMessage").textContent = message;
+    }
+
+    function retryGame() {
+      document.querySelector("#gameResults").style.display = "none";
+      startGame();
+    }
+
+    document.querySelector("#gameStartBtn").addEventListener("click", startGame);
+    document.querySelector("#gameRetryBtn").addEventListener("click", retryGame);
+    document.querySelector("#gameNextBtn").addEventListener("click", advanceQuestion);
+    document.querySelector("#gameViewMapBtn").addEventListener("click", viewOnMap);
+    document.querySelector("#backToQuizBtn").addEventListener("click", backToQuiz);
+
+    setupNarrativeReveals();
+    setupScrollytellingObserver();
+
+    new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting && state.quizGlobeActive) exitQuizGlobeMode();
+      });
+    }, { threshold: 0 }).observe(document.getElementById("section-quiz"));
+
+    fetch("data/interactive_el_nino_dashboard.json")
+      .then((response) => {
+        if (!response.ok) throw new Error("Could not load dashboard data.");
+        return response.json();
+      })
+      .then((data) => {
+        state.data = data;
+        renderFacts();
+        setLayer("combined");
+        drawTimeline();
+        enableGameStart();
+        setupQuizLayerButtons();
+        setupSectionNav();
+        state.map = new maplibregl.Map({
+          container: "map",
+          style: "https://demotiles.maplibre.org/style.json",
+          center: [-160, 0],
+          zoom: 2.0,
+          minZoom: 1.5,
+          maxZoom: 8,
+          scrollZoom: false,
+          projection: { type: "globe" }
+        });
+        state.map.scrollZoom.disable();
+        state.map.addControl(new maplibregl.NavigationControl(), "bottom-right");
+        function applySpaceFog() {
+          state.map.setFog?.({
+            color: "rgb(160, 210, 245)",
+            "high-color": "rgb(8, 20, 55)",
+            "horizon-blend": 0.008,
+            "space-color": "rgb(0, 0, 0)",
+            "star-intensity": 0.55
+          });
+        }
+        state.map.on("load", () => {
+          applySpaceFog();
+          initMapLayers(data);
+          setupMapEvents();
+          prebuildRemainingLayers();
+          updateGlobeLabels(state.layer);
+          // Enable scroll zoom while hovering over the globe panel
+          const storyRight = document.getElementById("storyRight");
+          if (storyRight) {
+            storyRight.addEventListener("mouseenter", () => state.map?.scrollZoom.enable());
+            storyRight.addEventListener("mouseleave", () => state.map?.scrollZoom.disable());
+          }
+        });
+        state.map.on("style.load", applySpaceFog);
+      })
+      .catch((error) => {
+        document.querySelector("#layerTitle").textContent = "Data failed to load";
+        document.querySelector("#layerDescription").textContent = error.message;
+      });
+  </script>
+</body>
+</html>

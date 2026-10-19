@@ -1,10 +1,25 @@
 [
   {
-    "title": "Bikewatching",
+    "title": "Sepsis vs. CRS After CAR-T Therapy",
     "year": "2026",
-    "image": "projects/bikewatching/assets/preview.svg",
-    "description": "An interactive Mapbox and D3 visualization of Boston-area bike lanes, Bluebike station traffic, time-of-day filtering, and directional traffic flow.",
-    "url": "projects/bikewatching/"
+    "image": "projects/sepsis-crs/poster-preview.png",
+    "description": "First-author ACP 2026 research at Boussina Lab: an OMOP, BigQuery SQL, and Python pipeline comparing four models on pre-diagnosis EHR features. Random forest ROC AUC: 0.85 holdout, 0.84 cross-validated; external validation remains future work.",
+    "award": "ACP 2026 presentation · Poster and abstract available",
+    "url": "projects/sepsis-crs/"
+  },
+  {
+    "title": "Alzheimer’s Disease Transcriptomics",
+    "year": "2026",
+    "image": "projects/alzheimers-transcriptomics/pca.png",
+    "description": "Donor-level pseudobulk analysis of 61,472 nuclei from 18 donors in GSE174367, with PCA/UMAP, cell-type comparisons, and leave-one-donor-out classification. An exploratory classical baseline.",
+    "url": "projects/alzheimers-transcriptomics/"
+  },
+  {
+    "title": "El Niño and Pacific Ocean Conditions",
+    "year": "2026",
+    "image": "projects/el-nino/preview.png",
+    "description": "A group climate visualization project. My contribution maps tropical Pacific sea-surface-temperature anomalies during CESM2 El Niño winters from 1951–2014.",
+    "url": "projects/el-nino/"
   },
   {
     "title": "GroceryDB Expository Visualization",
@@ -15,6 +30,34 @@
     "url": "projects/grocerydb-expository/"
   },
   {
+    "title": "Bikewatching",
+    "year": "2026",
+    "image": "projects/bikewatching/assets/preview.svg",
+    "description": "An interactive Mapbox and D3 visualization of Boston-area bike lanes, Bluebike station traffic, time-of-day filtering, and directional traffic flow.",
+    "url": "projects/bikewatching/"
+  },
+  {
+    "title": "Persuasive and Deceptive Visualization",
+    "year": "2026",
+    "image": "projects/persuasive-visualization/proposition.png",
+    "description": "A completed DSC 106 group project examining how opposing visual arguments and design decisions affect interpretation of the same evidence.",
+    "url": "projects/persuasive-visualization/"
+  },
+  {
+    "title": "Cooking Time vs. Recipe Ratings",
+    "year": "2025",
+    "image": "projects/recipe-ratings/preview.svg",
+    "description": "An end-to-end analysis of Food.com recipes and reviews covering data cleaning, missingness, permutation tests, random forest prediction, and fairness checks.",
+    "url": "https://thomasdeitel.github.io/dsc80finalproject/"
+  },
+  {
+    "title": "TherapyBot",
+    "year": "2025",
+    "image": "projects/therapybot/preview.svg",
+    "description": "A personal AI app project exploring daily mood tracking and conversations with different AI therapist personas. Listed on LinkedIn as an April 2025 project.",
+    "url": "projects/therapybot/"
+  },
+  {
     "title": "GroceryDB Checkpoint Analysis",
     "year": "2026",
     "image": "projects/grocerydb-checkpoint/output/candidate_2_category_heatmap.png",
@@ -22,63 +65,10 @@
     "url": "projects/grocerydb-checkpoint/output/grocerydb_checkpoint.pdf"
   },
   {
-    "title": "Project 2 Persuasive Visualization Scaffold",
-    "year": "2026",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "A reusable checkpoint scaffold for assembling persuasive and deceptive visualization drafts into the required three-page submission format."
-  },
-  {
-    "title": "Semantic Visions Signal Explorer",
-    "year": "2025",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "A concept for surfacing entity mentions, event spikes, and evolving topic clusters across large multilingual news datasets."
-  },
-  {
-    "title": "CRS vs Sepsis Modeling Pipeline",
-    "year": "2025",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "An AI workflow for distinguishing cytokine release syndrome from sepsis using OMOP electronic health record data and temporal clinical features."
-  },
-  {
-    "title": "Clinical Outcomes Dashboard",
-    "year": "2025",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "A dashboard concept for tracking patient cohorts, treatment response, and key risk markers across longitudinal healthcare data."
-  },
-  {
-    "title": "Startup Ops Snapshot",
-    "year": "2024",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "A reporting surface for reviewing campaign pacing, operational metrics, and sales activity in one concise weekly view."
-  },
-  {
-    "title": "Campus Mobility Explorer",
-    "year": "2024",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "A prototype map and filtering interface for understanding how students move among housing, classrooms, and transit stops."
-  },
-  {
-    "title": "Nutrition Pattern Cards",
-    "year": "2024",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "A responsive set of small multiples designed to compare meals, macro balance, and consistency across days and goals."
-  },
-  {
-    "title": "Personal Finance Simulator",
-    "year": "2023",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "A sandbox for comparing saving, investing, and budgeting strategies under adjustable assumptions and market conditions."
-  },
-  {
-    "title": "Founder Workflow Board",
-    "year": "2023",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "A lightweight board for balancing product decisions, research tasks, and execution milestones while running multiple ideas at once."
-  },
-  {
     "title": "Encrypted Exchange Concept",
-    "year": "2022",
-    "image": "https://dsc106.com/labs/lab02/images/empty.svg",
-    "description": "An early startup concept exploring a physical cryptocurrency exchange experience built around gift cards and delegated operations."
+    "year": "2021",
+    "image": "projects/encrypted/preview.svg",
+    "description": "An early product architecture and technical roadmap for a design-stage physical cryptocurrency exchange using gift card infrastructure.",
+    "url": "projects/encrypted/"
   }
 ]

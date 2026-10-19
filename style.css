@@ -405,7 +405,7 @@ button:focus-visible {
 .home-hero {
   align-items: center;
   background:
-    linear-gradient(135deg, oklch(from var(--color-accent) 96% 0.05 h), transparent 58%),
+    linear-gradient(135deg, light-dark(oklch(from var(--color-accent) 96% 0.05 h), oklch(from var(--color-accent) 28% 0.05 h)), transparent 58%),
     var(--color-surface-alt);
   display: grid;
   gap: 1.5rem;
@@ -735,7 +735,7 @@ main > section {
 
 .resume-header {
   background:
-    linear-gradient(135deg, oklch(from var(--color-accent) 97% 0.03 h), transparent 60%),
+    linear-gradient(135deg, light-dark(oklch(from var(--color-accent) 97% 0.03 h), oklch(from var(--color-accent) 26% 0.03 h)), transparent 60%),
     var(--color-surface-alt);
 }
 

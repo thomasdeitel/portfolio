@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project 2: Persuasive or Deceptive Visualization?</title>
+  <style>
+    /* ── Reset & Base ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pro-color:  #2a7a4f;
+      --con-color:  #b03a2e;
+      --bg:         #f7f8fa;
+      --card-bg:    #ffffff;
+      --border:     #e0e4ea;
+      --text:       #1a1d23;
+      --muted:      #5f6778;
+      --accent:     #3b5bdb;
+      --radius:     10px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    /* ── Header ───────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #1a1d23 0%, #2c3047 100%);
+      color: #fff;
+      padding: 3rem 2rem 2.5rem;
+      text-align: center;
+    }
+    header .label {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+    }
+    header h1 {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    header .subtitle {
+      font-size: 1rem;
+      color: #a9b4c9;
+      max-width: 680px;
+      margin: 0 auto 1.5rem;
+    }
+
+    /* Group member pills */
+    .members {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .member-pill {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.85rem;
+      color: #dce4f0;
+    }
+
+    /* ── Main layout ──────────────────────────────── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    /* ── Section cards ────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 2.2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+
+    .section-heading {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+
+    /* Proposition banner */
+    .proposition-box {
+      border-left: 5px solid var(--accent);
+      background: #eef1fd;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 1.2rem 1.5rem;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 0.5rem 0 0;
+    }
+
+    /* ── Vis sections ─────────────────────────────── */
+    .vis-section {
+      margin-bottom: 2.5rem;
+    }
+
+    .vis-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.1rem;
+    }
+    .vis-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .badge-pro  { background: #d4edda; color: var(--pro-color); border: 1px solid #a8d5b5; }
+    .badge-con  { background: #fde8e8; color: var(--con-color); border: 1px solid #f0b0aa; }
+
+    .vis-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    /* Image container */
+    .vis-image-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      background: #fafafa;
+      text-align: center;
+    }
+    .vis-image-wrap img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ── Design decisions table ───────────────────── */
+    .decisions-grid {
+      display: grid;
+      gap: 1rem;
+      margin-top: 0.25rem;
+    }
+
+    .decision-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.5rem 1.1rem;
+      align-items: start;
+    }
+
+    .decision-num {
+      grid-row: span 3;
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+    }
+    .decision-num.pro { background: #d4edda; color: var(--pro-color); }
+    .decision-num.con { background: #fde8e8; color: var(--con-color); }
+
+    .decision-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+    }
+    .score-label { color: var(--muted); }
+    .score-bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: #e5e7eb;
+      border-radius: 3px;
+      position: relative;
+      max-width: 160px;
+    }
+    .score-bar {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      border-radius: 3px;
+    }
+    /* score is –2 to +2; centre at 50% width */
+    /* JS sets --score-val; fallback neutral */
+    .score-value { font-weight: 700; font-size: 0.85rem; }
+
+    .decision-body {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .placeholder-text {
+      font-style: italic;
+      color: #aab0bc;
+    }
+
+    /* ── Reflection ───────────────────────────────── */
+    .reflection-body p {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+    .reflection-body p:last-child { margin-bottom: 0; }
+
+    /* ── Divider ──────────────────────────────────── */
+    .vis-divider {
+      border: none;
+      border-top: 2px dashed var(--border);
+      margin: 2.5rem 0;
+    }
+
+    /* ── Footer ───────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Score helpers (rendered via JS) ─────────── */
+    .score-pip {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════ HEADER ════════════════════════ -->
+<header>
+  <div class="label">DSC 106 · Project 2</div>
+  <h1>Persuasive and Deceptive Visualizations</h1>
+  <div class="members">
+    <span class="member-pill">Matthew Paoletta · mpaoletta@ucsd.edu</span>
+    <span class="member-pill">Gilad Segal · gsegal@ucsd.edu</span>
+    <span class="member-pill">Sancho Syquia · ssyquia@ucsd.edu</span>
+    <span class="member-pill">Thomas Deitel · tdeitel@ucsd.edu</span>
+  </div>
+</header>
+
+<!-- ════════════════════════ MAIN ════════════════════════ -->
+<main>
+
+  <!-- ── Proposition ── -->
+  <div class="card">
+    <div class="section-heading">Our Proposition</div>
+    <h2>Dataset: World Bank Human Development Indicators (1960–2020)</h2>
+    <div class="proposition-box">
+      "Investing in education is a reliable path to national prosperity."
+    </div>
+  </div>
+
+  <!-- ═══════════════ VIS 1 – PRO ═══════════════ -->
+  <div class="card vis-section">
+    <div class="vis-header">
+      <span class="vis-badge badge-pro">Supporting View</span>
+      <span class="vis-title">Higher Education Outcomes Are Associated With Greater Prosperity</span>
+    </div>
+
+    <div class="vis-image-wrap">
+      <img src="proposition.png"
+           alt="Bar chart showing average GDP per capita rising monotonically across tertiary enrollment percentile groups, from $0.4k at the 0–10th percentile to $22.4k at the 90–100th percentile." />
+    </div>
+
+    <!-- ── Design Decisions ── -->
+    <h3>Design Decisions &amp; Rationale</h3>
+    <div class="decisions-grid" id="pro-decisions">
+
+          <div class="decision-card">
+      <div class="decision-num pro">1</div>
+      <div class="decision-title">Tertiary enrollment as a mediating variable</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">+1</span>
+      </div>
+      <div class="decision-body">
+        Rather than directly plotting education spending vs. GDP — which shows a weak relationship — this chart introduces tertiary enrollment as a mediating step, grounding the argument in human capital theory. This is a legitimate and earnest analytical choice because it treats investment in education as something that should eventually show up in educational outcomes, not just budget totals. We considered plotting spending directly against GDP but found enrollment produced a cleaner, more defensible narrative for the supporting view.
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <div class="decision-num pro">2</div>
+      <div class="decision-title">Percentile binning smooths within-group variance</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">-0.5</span>
+      </div>
+      <div class="decision-body">
+        Grouping countries into 10th-percentile enrollment bins and averaging GDP within each bin smooths over enormous within-group variance. The 30–40th percentile bin ($2.8k) dips below the 20–30th ($5.1k), which is an awkward contradiction — but because it's one blip in a generally upward staircase, it reads as noise rather than a refutation. A continuous scatter would expose the messiness more honestly.
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <div class="decision-num pro">3</div>
+      <div class="decision-title">Red-to-green traffic-light color gradient</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">-1</span>
+      </div>
+      <div class="decision-body">
+        The color ramp from red (low enrollment) to dark green (high enrollment) borrows traffic-light connotations — red means bad, green means good — priming the reader emotionally before they read any values. An earnest choice would use a single neutral hue with varying lightness. We settled on the gradient because it dramatically reinforces the staircase narrative and makes the direction of the argument unmistakable at a glance.
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <div class="decision-num pro">4</div>
+      <div class="decision-title">Bold "Lowest/Highest Tertiary Enrollment" anchor annotations</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">-0.5</span>
+      </div>
+      <div class="decision-body">
+        The large red and green text labels anchored to the leftmost and rightmost bars direct the reader's eye to the extremes and reinforce the color coding. This discourages attention to the non-monotonic middle bars and dramatizes the contrast between the two ends of the distribution. Removing them would make the chart more neutral, but we kept them because they make the supporting argument immediately legible to a casual reader.
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <div class="decision-num pro">5</div>
+      <div class="decision-title">Dollar-value labels on every bar</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">+1</span>
+      </div>
+      <div class="decision-body">
+        Every bar is labeled with its exact average GDP per capita value, which is a fully earnest transparency choice — readers can verify the numbers without relying on the y-axis alone. This also makes the jump from $0.4k at the bottom to $22.4k at the top feel concrete and striking rather than abstract. We considered omitting labels to keep the chart cleaner, but the specific values make the magnitude of the gap more persuasive.
+      </div>
+    </div>
+
+    </div><!-- /pro-decisions -->
+  </div><!-- /card -->
+
+  <hr class="vis-divider" />
+
+  <!-- ═══════════════ VIS 2 – OPPOSING ═══════════════ -->
+  <div class="card vis-section">
+    <div class="vis-header">
+      <span class="vis-badge badge-con">Opposing View</span>
+      <span class="vis-title">More Government Education Spending Does Not Guarantee Better Outcomes</span>
+    </div>
+
+    <div class="vis-image-wrap">
+      <img src="opposing.png"
+           alt="Violin plot showing overlapping distributions of tertiary enrollment rates across four government-spending quartiles, with the highest-spending quartile having a lower median than the upper-middle quartile." />
+    </div>
+
+    <!-- ── Design Decisions ── -->
+    <h3>Design Decisions &amp; Rationale</h3>
+    <div class="decisions-grid" id="con-decisions">
+
+          <div class="decision-card">
+      <div class="decision-num con">1</div>
+      <div class="decision-title">Quartile grouping instead of continuous data</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">-1</span>
+      </div>
+      <div class="decision-body">
+        Rather than showing a continuous scatter of spending vs. enrollment, countries are binned into four spending quartiles. This obscures the fact that there is a general positive trend in the raw data — when you average within groups, the messiness within each quartile becomes the story instead. An earnest approach would show individual country points overlaid, making any underlying trend more visible.
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <div class="decision-num con">2</div>
+      <div class="decision-title">Highlighting that the highest-spending median falls below upper-middle</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">-1.5</span>
+      </div>
+      <div class="decision-body">
+        The annotation explicitly calls out "Highest-spending median falls below upper-middle," drawing attention to a single non-monotonic quirk in the data. This is a cherry-picked observation — the overall pattern across the four violins does show increasing enrollment with spending, but by spotlighting this one reversal the reader is led to conclude the whole relationship is invalid. The annotation does the rhetorical heavy lifting.
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <div class="decision-num con">3</div>
+      <div class="decision-title">Violin shape emphasizes spread over central tendency</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">-1</span>
+      </div>
+      <div class="decision-body">
+        Violin plots are chosen over bar charts or dot plots specifically because they make within-group variance visually dominant. The wide, overlapping shapes make the distributions look interchangeable across spending groups, which visually implies no meaningful difference. A bar chart showing group medians would have made the modest upward trend much more obvious and harder to dispute.
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <div class="decision-num con">4</div>
+      <div class="decision-title">Muted, nearly identical color palette across groups</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">-0.5</span>
+      </div>
+      <div class="decision-body">
+        All four violins use very similar dusty rose/mauve tones with only slight darkening from left to right. This minimizes any sense of progression across spending groups — a more earnest design might use a clearer color ramp to visually encode the ordering. The near-identical colors make the groups feel equivalent before the reader even looks at the shapes.
+      </div>
+    </div>
+
+    <div class="decision-card">
+      <div class="decision-num con">5</div>
+      <div class="decision-title">"Heavy overlap across spending groups" editorial annotation</div>
+      <div class="score-row">
+        <span class="score-label">Earnestness score:</span>
+        <span class="score-value">-1</span>
+      </div>
+      <div class="decision-body">
+        This annotation tells the reader what conclusion to draw from the overlapping distributions before they can form their own interpretation. While the overlap is real, framing it as the headline finding ignores that the medians do shift upward from Q1 to Q3. The annotation steers interpretation toward variance and away from central tendency, which weakens the idea that education spending is a reliable path to better national outcomes.
+      </div>
+    </div>
+
+    </div><!-- /con-decisions -->
+  </div><!-- /card -->
+
+  <!-- ═══════════════ REFLECTION ═══════════════ -->
+  <div class="card">
+    <div class="section-heading">Final Reflection</div>
+    <h2>Overall Design Process</h2>
+    <div class="reflection-body">
+      <p>
+        The easiest part of this project was coming up with a general idea. It already makes sense that investing in education and national prosperity would be connected in some way, so at first the proposition felt pretty obvious. The harder part was figuring out what we actually wanted to compare. Education spending, enrollment, and GDP per capita all sound related, but they do not tell the exact same story. We were surprised by how much the chart changed depending on which variable we chose, how we grouped the countries, and what we decided to point out with labels.
+      </p>
+      <p>
+        Making both sides also made the assignment more interesting than just trying to make one "correct" graph. For the supporting visualization, it was fairly easy to make the relationship look strong by using enrollment groups and showing the big difference between the lowest and highest groups. For the opposing visualization, we had to think more carefully about how to argue against the proposition without just making something false. The violin plot helped because it showed that more government education spending does not automatically lead to higher enrollment rates. That made us realize that ethical visualization is not only about using real data, but also about being honest about what the chart is emphasizing and what it is leaving in the background.
+      </p>
+      <p>
+        We do not think there is a perfect line between persuasion and deception, but there are some warning signs. It feels acceptable to choose a title, colors, or grouping that helps the reader understand the point of the chart, as long as the chart still gives them enough information to question it. It becomes more misleading when the design depends on hiding context, cherry-picking one exception, or making a weak pattern look much stronger than it is. In our charts, both sides use some persuasive choices, but the more questionable choices are the ones that push the reader toward one conclusion while making the messier parts of the data easier to miss.
+      </p>
+    </div>
+  </div>
+
+</main>
+
+<!-- ════════════════════════ FOOTER ════════════════════════ -->
+<footer>
+  DSC 106 · Project 2 · University of California San Diego · Spring 2026
+</footer>
+
+</body>
+</html>
