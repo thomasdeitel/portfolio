@@ -3,7 +3,7 @@
     "title": "Sepsis vs. CRS After CAR-T Therapy",
     "year": "2026",
     "image": "projects/sepsis-crs/poster-preview.png",
-    "description": "First-author ACP 2026 research at Boussina Lab: an OMOP, BigQuery SQL, and Python pipeline comparing four models on pre-diagnosis EHR features. Random forest ROC AUC: 0.85 holdout, 0.84 cross-validated; external validation remains future work.",
+    "description": "First-author ACP 2026 research at Boussina Lab: an OMOP, BigQuery SQL, and Python pipeline comparing four models on pre-diagnosis EHR features. Random forest ROC AUC: 0.85 holdout, 0.84 cross-validated; external validation remains future work. Repository, code, and patient-level data are not public due to UC Health data-sharing restrictions.",
     "award": "ACP 2026 presentation · Poster and abstract available",
     "url": "projects/sepsis-crs/"
   },
