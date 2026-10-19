@@ -1,0 +1,106 @@
+/* Resume-only layout: consistent headings, dates, and contact alignment. */
+.resume-page main {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.resume-page .resume-header > p {
+  max-width: 65ch;
+}
+
+.resume-page .graduation-summary {
+  color: var(--color-text);
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+
+.resume-page .resume-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem 1.5rem;
+}
+
+.resume-page .resume-links li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.resume-page .resume-links li:last-child {
+  grid-column: 1 / -1;
+  font-weight: 700;
+}
+
+.resume-page .entry-header {
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, auto);
+  align-items: start;
+  gap: 0.25rem 1.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.resume-page .entry-header > :first-child {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.resume-page .entry-meta {
+  grid-column: 2;
+  justify-self: end;
+  text-align: right;
+}
+
+.resume-page .degree-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, auto);
+  gap: 0.5rem 1.5rem;
+  padding-block: 1rem;
+}
+
+.resume-page .degree-entry + .degree-entry {
+  border-top: 1px solid var(--color-border);
+}
+
+.resume-page .degree-entry h4 {
+  margin: 0 0 0.4rem;
+}
+
+.resume-page .degree-entry p {
+  margin: 0;
+}
+
+.resume-page .degree-date {
+  color: var(--color-muted);
+  text-align: right;
+}
+
+.resume-page section > article + article {
+  border-top: 1px solid var(--color-border);
+  padding-top: 1.5rem;
+}
+
+.resume-page article > h3 {
+  margin-top: 0;
+}
+
+@media (max-width: 48rem) {
+  .resume-page .entry-header,
+  .resume-page .degree-entry,
+  .resume-page .resume-links {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .resume-page .entry-header > :first-child {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .resume-page .entry-meta {
+    grid-column: 1;
+    justify-self: start;
+    text-align: left;
+  }
+
+  .resume-page .degree-date {
+    text-align: left;
+  }
+}
