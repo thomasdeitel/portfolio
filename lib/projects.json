@@ -3,8 +3,8 @@
     "title": "Sepsis vs. CRS After CAR-T Therapy",
     "year": "2026",
     "image": "projects/sepsis-crs/acp-first-place-announcement.jpg",
-    "description": "First-place Affiliate Members Research/QI project at ACP California Southern Region III, developed at Boussina Lab: an OMOP, BigQuery SQL, and Python pipeline comparing four models on pre-diagnosis EHR features. Random forest ROC AUC: 0.85 holdout, 0.84 cross-validated; external validation remains future work. Repository, code, and patient-level data are not public due to UC Health data-sharing restrictions.",
-    "award": "1st Place — ACP California Southern Region III · Affiliate Members, Research/QI",
+    "description": "First-place Affiliate Members Research/QI project at the American College of Physicians, California Southern Region III, developed at Boussina Lab: an OMOP, BigQuery SQL, and Python pipeline comparing four models on pre-diagnosis EHR features. Random forest ROC AUC: 0.85 holdout, 0.84 cross-validated; external validation remains future work. Repository, code, and patient-level data are not public due to UC Health data-sharing restrictions.",
+    "award": "1st Place — American College of Physicians · California Southern Region III · Affiliate Members, Research/QI",
     "url": "projects/sepsis-crs/",
     "imageAlt": "ACP winners slide naming Thomas Deitel, UCSD, first place in the Affiliate Members Research/QI category."
   },
