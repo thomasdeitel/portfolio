@@ -54,6 +54,13 @@
     "url": "projects/persuasive-visualization/"
   },
   {
+    "title": "GroceryDB Checkpoint Analysis",
+    "year": "2026",
+    "image": "projects/grocerydb-checkpoint/output/candidate_2_category_heatmap.png",
+    "description": "An earlier checkpoint exploration that tested heatmaps and category-level comparisons before the final GroceryDB visual story.",
+    "url": "projects/grocerydb-checkpoint/output/grocerydb_checkpoint.pdf"
+  },
+  {
     "title": "Cooking Time vs. Recipe Ratings",
     "year": "2025",
     "image": "projects/recipe-ratings/preview.svg",
@@ -66,13 +73,6 @@
     "image": "projects/therapybot/preview.svg",
     "description": "A smartphone app with multiple AI therapist personalities and daily mood ratings that adapt the experience to each user.",
     "url": "projects/therapybot/"
-  },
-  {
-    "title": "GroceryDB Checkpoint Analysis",
-    "year": "2026",
-    "image": "projects/grocerydb-checkpoint/output/candidate_2_category_heatmap.png",
-    "description": "An earlier checkpoint exploration that tested heatmaps and category-level comparisons before the final GroceryDB visual story.",
-    "url": "projects/grocerydb-checkpoint/output/grocerydb_checkpoint.pdf"
   },
   {
     "title": "Encrypted Exchange Concept",

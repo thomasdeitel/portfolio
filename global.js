@@ -9,10 +9,10 @@ window.$$ = $$;
 const pages = [
   { url: '', title: 'Home' },
   { url: 'projects/', title: 'Projects' },
-  { url: 'meta/', title: 'Meta' },
   { url: 'contact/', title: 'Contact' },
   { url: 'resume/', title: 'Resume' },
   { url: 'https://github.com/thomasdeitel', title: 'GitHub' },
+  { url: 'meta/', title: 'Meta' },
 ];
 
 const BASE_URL = new URL('.', import.meta.url);
