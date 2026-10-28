@@ -4,25 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Thomas Deitel: Contact</title>
-  <link rel="stylesheet" href="../style.css">
+  <meta name="description" content="Contact Thomas Deitel by email at tdeitel@ucsd.edu or connect on LinkedIn.">
+  <link rel="stylesheet" href="../style.css?v=20261018">
   <script type="module" src="../global.js"></script>
 </head>
 <body>
-  <h1>Contact</h1>
-  <form action="mailto:tdeitel@ucsd.edu" method="GET">
-    <label>
-      Email
-      <input name="email" type="email" value="visitor@example.com" required>
-    </label>
-    <label>
-      Subject
-      <input name="subject" value="Hello Thomas" required>
-    </label>
-    <label>
-      Message
-      <textarea name="body" rows="6" required>I found your portfolio and wanted to reach out.</textarea>
-    </label>
-    <button>Send</button>
-  </form>
+  <main>
+    <header>
+      <p class="eyebrow">Get in touch</p>
+      <h1>Contact</h1>
+      <p>For research, opportunities, or questions about my work, email me directly.</p>
+    </header>
+    <section aria-labelledby="email-heading">
+      <h2 id="email-heading">Email Thomas</h2>
+      <p><strong><a href="mailto:tdeitel@ucsd.edu">tdeitel@ucsd.edu</a></strong></p>
+      <ul class="resume-links">
+        <li><a href="mailto:tdeitel@ucsd.edu?subject=Portfolio%20inquiry">Open your email app</a></li>
+        <li><a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=tdeitel%40ucsd.edu&amp;su=Portfolio%20inquiry" target="_blank" rel="noopener noreferrer">Compose in Gmail (opens a new tab)</a></li>
+      </ul>
+      <p style="margin-top:1rem">These links open an email draft addressed to me. Write your message and send it from your email app or Gmail; this website does not send it for you.</p>
+      <p>If neither option opens, copy <strong>tdeitel@ucsd.edu</strong> into your preferred email service.</p>
+    </section>
+    <section aria-labelledby="linkedin-heading">
+      <h2 id="linkedin-heading">LinkedIn</h2>
+      <p><a href="https://www.linkedin.com/in/thomasdeitel" target="_blank" rel="noopener noreferrer">Connect with me on LinkedIn</a></p>
+    </section>
+  </main>
 </body>
 </html>
