@@ -1,5 +1,14 @@
 [
   {
+    "title": "Sepsis vs. CRS After CAR-T Therapy",
+    "year": "2026",
+    "image": "projects/sepsis-crs/acp-first-place-announcement.jpg",
+    "description": "First-place Affiliate Members Research/QI project at ACP California Southern Region III, developed at Boussina Lab: an OMOP, BigQuery SQL, and Python pipeline comparing four models on pre-diagnosis EHR features. Random forest ROC AUC: 0.85 holdout, 0.84 cross-validated; external validation remains future work. Repository, code, and patient-level data are not public due to UC Health data-sharing restrictions.",
+    "award": "1st Place — ACP California Southern Region III · Affiliate Members, Research/QI",
+    "url": "projects/sepsis-crs/",
+    "imageAlt": "ACP winners slide naming Thomas Deitel, UCSD, first place in the Affiliate Members Research/QI category."
+  },
+  {
     "title": "Navy Atmosphere Radar Forecaster (i4NS)",
     "year": "2026",
     "image": "projects/navy-atmospheric-forecasting/coverage_example.png",
@@ -7,14 +16,6 @@
     "description": "Under the Radar: a public-NOAA-data prototype for atmospheric duct prediction, radar propagation maps, reliability indicators, and offline operator retraining. Built through UC San Diego’s Innovating for National Security program.",
     "award": "Featured project · Public code and evaluation results",
     "url": "projects/navy-atmospheric-forecasting/"
-  },
-  {
-    "title": "Sepsis vs. CRS After CAR-T Therapy",
-    "year": "2026",
-    "image": "projects/sepsis-crs/poster-preview.png",
-    "description": "First-author research presented at ACP 2026 at Boussina Lab: an OMOP, BigQuery SQL, and Python pipeline comparing four models on pre-diagnosis EHR features. Random forest ROC AUC: 0.85 holdout, 0.84 cross-validated; external validation remains future work. Repository, code, and patient-level data are not public due to UC Health data-sharing restrictions.",
-    "award": "Presented at ACP 2026 · Poster and abstract available",
-    "url": "projects/sepsis-crs/"
   },
   {
     "title": "Alzheimer’s Disease Transcriptomics",

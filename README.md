@@ -6,6 +6,14 @@
 
 Explore my research, data science projects, AI development, and visualization work, along with my resume and contact information.
 
+## 1st Place — ACP California Southern Region III
+
+**Affiliate Members — Research/QI, 2026.** My CAR-T sepsis versus cytokine release syndrome machine learning project won first place in this category.
+
+**[See the award-winning research, winners announcement, and presentation photos](https://thomasdeitel.github.io/portfolio/projects/sepsis-crs/)**
+
+![ACP winners announcement naming Thomas Deitel, UCSD, first place in Affiliate Members Research/QI](projects/sepsis-crs/acp-first-place-announcement.jpg)
+
 - **[Navy Atmosphere Radar Forecaster — Under the Radar](https://thomasdeitel.github.io/portfolio/projects/navy-atmospheric-forecasting/)** — my featured i4NS project for atmospheric duct prediction, radar propagation modeling, and offline operator retraining using public NOAA data. [Explore the code and results](https://github.com/thomasdeitel/under-the-radar-mvp).
 - **[All projects](https://thomasdeitel.github.io/portfolio/projects/)** — research, completed coursework, and personal projects.
 - **[ACP 2026 sepsis research](https://thomasdeitel.github.io/portfolio/projects/sepsis-crs/)** — my work distinguishing sepsis from cytokine release syndrome after CAR-T therapy, including the poster and abstract. The research repository, code, and patient-level data are not public due to UC Health data-sharing restrictions.
